@@ -2,7 +2,7 @@
 
 Mode: Operate. These screens extend the Banded Paperback world established in the Library brief; they inherit DESIGN.md and add no new identity. Add is a single form (ADR 0007). Inbox reviews Libby import groups (ADR 0002/0003). Settings holds backup and restore (ADR 0005).
 Constraints: fuzzy matches never auto-merge; Finished date is the borrow month; unknown dates stay unknown; genre suggestions are marked, never pre-selected; restore replaces, never merges; every destructive step confirms or offers Undo.
-Unresolved: automatic Open Library lookups for Inbox items; Goodreads import and update rows; genre list management; phone theme toggle.
+Unresolved: the Merge entry point on the Work page (BUILD_BRIEF); shelf management beyond Want to read; Goodreads and Libby rows for one book stay separate; genre list management; phone theme toggle.
 
 ## Direction contract
 

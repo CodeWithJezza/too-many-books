@@ -9,7 +9,7 @@ import type { Format, ReadingStatus } from '../types'
 const FORMAT: Record<Format, string> = { ebook: 'Ebook', audiobook: 'Audiobook', print: 'Print' }
 const STATUS: Record<ReadingStatus, string> = { reading: 'Reading now', finished: 'Finished', dnf: 'Did not finish' }
 
-export function WorkPanel({ id, onClose }: { id?: number; onClose: () => void }) {
+export function WorkPanel({ id, onClose, onEdit }: { id?: number; onClose: () => void; onEdit: (id: number) => void }) {
   const work = useWorkDetail(id)
 
   return (
@@ -35,6 +35,7 @@ export function WorkPanel({ id, onClose }: { id?: number; onClose: () => void })
                 {work.series && work.pageCount ? ' · ' : ''}
                 {work.pageCount ? `${work.pageCount} pages` : ''}
               </p>
+              <button type="button" className="btn-quiet edit-btn" onClick={() => onEdit(work.id)}>Edit</button>
             </div>
           </header>
 

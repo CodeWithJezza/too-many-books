@@ -6,7 +6,10 @@ import { useLookup } from '../import/lookup'
 import { suggestGenres } from '../metadata/suggest'
 import { buildGroups, isClean, type InboxGroup } from '../lib/inbox'
 import { ImportFormatError } from '../import/libby'
-import { importLibby, resolveGroupWithReceipt, setDismissed, undoResolve, useRecords, useWorksRaw, type ImportSummary, type ResolveReceipt, type ResolveInput } from '../storage'
+import { importGoodreads } from '../storage/goodreads'
+import { GoodreadsFormatError } from '../import/goodreads'
+import { GoodreadsRow } from './GoodreadsRow'
+import { db, importLibby, resolveGroupWithReceipt, setDismissed, undoResolve, useGoodreads, useRecords, useWorksRaw, type ImportSummary, type ResolveReceipt, type ResolveInput } from '../storage'
 import type { Format, GenreId, WorkSummary } from '../types'
 
 const monthOf = (ms: number) => {
@@ -134,7 +137,7 @@ function GroupRow({ group, dismissed, onResolved }: { group: InboxGroup; dismiss
             <p className="ib-note">
               {undecided
                 ? 'Say whether it is the same book first.'
-                : `Finished is dated ${formatDate(finish)}, the borrow month. You can edit it later.`}
+                : `Finished is dated ${formatDate(finish)}, the borrow month.`}
             </p>
           </>
         )}
@@ -148,13 +151,17 @@ export function Inbox() {
   const pending = useRecords('pending')
   const dismissed = useRecords('dismissed')
   const works = useWorksRaw()
+  const grPending = useGoodreads('pending')
+  const grDismissed = useGoodreads('dismissed')
+  const [grSummary, setGrSummary] = useState<string | undefined>()
   const [view, setView] = useState<'pending' | 'dismissed'>('pending')
   const [summary, setSummary] = useState<ImportSummary | undefined>()
   const [error, setError] = useState<string | undefined>()
   const [note, setNote] = useState<string | undefined>()
   const [importing, setImporting] = useState(false)
-  const [undo, setUndo] = useState<{ receipts: ResolveReceipt[]; text: string } | undefined>()
+  const [undo, setUndo] = useState<{ text: string; run: () => Promise<void> } | undefined>()
   const fileRef = useRef<HTMLInputElement>(null)
+  const grFileRef = useRef<HTMLInputElement>(null)
 
   const pendingGroups = useMemo(() => buildGroups(pending ?? [], works), [pending, works])
   const dismissedGroups = useMemo(() => buildGroups(dismissed ?? [], works), [dismissed, works])
@@ -166,6 +173,7 @@ export function Inbox() {
     setImporting(true)
     setError(undefined)
     setSummary(undefined)
+    setGrSummary(undefined)
     setNote(undefined)
     try {
       const json = JSON.parse(await file.text()) as unknown
@@ -190,21 +198,44 @@ export function Inbox() {
     for (const g of clean) {
       receipts.push(await resolveGroupWithReceipt({ recordIds: g.records.map((r) => r.id!), resolution: { kind: 'link' }, workId: g.match!.work.id }))
     }
-    setUndo({ receipts, text: `Linked the loans for ${receipts.length} ${receipts.length === 1 ? 'book' : 'books'} you already had. Nothing was marked finished.` })
+    setUndo({
+      text: `Linked the loans for ${receipts.length} ${receipts.length === 1 ? 'book' : 'books'} you already had. Nothing was marked finished.`,
+      run: async () => { for (const r of [...receipts].reverse()) await undoResolve(r) },
+    })
   }
 
   async function doUndo() {
     if (!undo) return
-    for (const r of [...undo.receipts].reverse()) await undoResolve(r)
+    await undo.run()
     setUndo(undefined)
-    setNote('Undone. Those books are back in your Inbox.')
+    setNote('Undone. Those rows are back in your Inbox.')
+  }
+
+  async function onGoodreads(file: File | undefined) {
+    if (!file) return
+    setImporting(true)
+    setError(undefined)
+    setSummary(undefined)
+    setGrSummary(undefined)
+    setNote(undefined)
+    try {
+      const s = await importGoodreads(await file.text(), file.name, db)
+      const parts = [`${s.added} new`, s.updates ? `${s.updates} changed` : '', s.refreshed ? `${s.refreshed} waiting rows updated` : '', s.unchanged ? `${s.unchanged} unchanged` : '', s.keptYours ? `${s.keptYours} changed at Goodreads but left as you edited them` : ''].filter(Boolean)
+      setGrSummary(`Found ${s.found} Goodreads books: ${parts.join(', ')}.${s.ignored ? ` ${s.ignored} rows were skipped.` : ''}`)
+      setView('pending')
+    } catch (e) {
+      setError(e instanceof GoodreadsFormatError ? e.message : 'The import failed and nothing was added.')
+    } finally {
+      setImporting(false)
+      if (grFileRef.current) grFileRef.current.value = ''
+    }
   }
 
   return (
     <main className="library inbox">
       <div className="lib-head">
         <h1>Inbox</h1>
-        <span className="sample-note">{pendingGroups.length} to review</span>
+        <span className="sample-note">{pendingGroups.length + (grPending?.length ?? 0)} to review</span>
       </div>
 
       <div className="ib-bar">
@@ -212,11 +243,15 @@ export function Inbox() {
           {importing ? 'Reading file…' : 'Import Libby export'}
           <input ref={fileRef} type="file" accept=".json,application/json" className="sr-only" disabled={importing} onChange={(e) => void onFile(e.target.files?.[0])} />
         </label>
+        <label className="btn-quiet file-btn">
+          Import Goodreads export
+          <input ref={grFileRef} type="file" accept=".csv,text/csv" className="sr-only" disabled={importing} onChange={(e) => void onGoodreads(e.target.files?.[0])} />
+        </label>
         {clean.length > 0 && view === 'pending' && (
           <button type="button" className="btn-quiet" onClick={() => void acceptClean()}>Link {clean.length} clean {clean.length === 1 ? 'match' : 'matches'}</button>
         )}
       </div>
-      <p className="hint ib-help">In Libby, open Timeline, then Actions, then Export timeline, and choose JSON. Only borrows are read.</p>
+      <p className="hint ib-help">Libby: open Timeline, then Actions, then Export timeline, and choose JSON. Only borrows are read. Goodreads: on goodreads.com choose My Books, then Import and export, then Export Library, and pick the .csv file.</p>
 
       {summary && (
         <p className="ib-summary" role="status">
@@ -224,6 +259,7 @@ export function Inbox() {
           {summary.ignored > 0 ? `. ${summary.ignored} other ${summary.ignored === 1 ? 'row was' : 'rows were'} skipped.` : '.'}
         </p>
       )}
+      {grSummary && <p className="ib-summary" role="status">{grSummary}</p>}
       {undo && (
         <p className="ib-summary undo" role="status">
           {undo.text}
@@ -234,20 +270,23 @@ export function Inbox() {
       {error && <p className="form-error" role="alert">{error}</p>}
 
       <div className="shelf-tabs" role="tablist" aria-label="Inbox view">
-        <button type="button" role="tab" className="shelf-tab" aria-selected={view === 'pending'} onClick={() => setView('pending')}>To review <span>{pendingGroups.length}</span></button>
-        <button type="button" role="tab" className="shelf-tab" aria-selected={view === 'dismissed'} onClick={() => setView('dismissed')}>Dismissed <span>{dismissedGroups.length}</span></button>
+        <button type="button" role="tab" className="shelf-tab" aria-selected={view === 'pending'} onClick={() => setView('pending')}>To review <span>{pendingGroups.length + (grPending?.length ?? 0)}</span></button>
+        <button type="button" role="tab" className="shelf-tab" aria-selected={view === 'dismissed'} onClick={() => setView('dismissed')}>Dismissed <span>{dismissedGroups.length + (grDismissed?.length ?? 0)}</span></button>
       </div>
 
       {pending === undefined ? (
         <p className="state" role="status">Opening your inbox…</p>
-      ) : groups.length === 0 ? (
+      ) : groups.length === 0 && (view === 'pending' ? grPending : grDismissed)?.length === 0 ? (
         <div className="state">
           <p className="state-title">{view === 'pending' ? 'Inbox is clear' : 'Nothing dismissed'}</p>
-          <p>{view === 'pending' ? 'Import a Libby export and its borrows will wait here for you to review.' : 'Dismissed borrows show up here so you can bring them back.'}</p>
+          <p>{view === 'pending' ? 'Import a Libby or Goodreads export and its books will wait here for you to review.' : 'Dismissed borrows show up here so you can bring them back.'}</p>
         </div>
       ) : (
         <ul className="ib-list" aria-label={view === 'pending' ? 'Books to review' : 'Dismissed books'}>
-          {groups.map((g) => <GroupRow key={g.key} group={g} dismissed={view === 'dismissed'} onResolved={(r, what) => { setNote(undefined); setUndo({ receipts: [r], text: `Marked “${r.title}” ${what}.` }) }} />)}
+          {(view === 'pending' ? grPending : grDismissed)?.map((r) => (
+            <GoodreadsRow key={`gr${r.id}-${JSON.stringify(r.seen)}`} rec={r} works={works} dismissed={view === 'dismissed'} onDone={(text, run) => { setNote(undefined); setUndo({ text, run }) }} />
+          ))}
+          {groups.map((g) => <GroupRow key={g.key} group={g} dismissed={view === 'dismissed'} onResolved={(r, what) => { setNote(undefined); setUndo({ text: `Marked “${r.title}” ${what}.`, run: () => undoResolve(r) }) }} />)}
         </ul>
       )}
     </main>

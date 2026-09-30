@@ -1,7 +1,7 @@
 import type { LibraryDB } from '../storage/db'
 import { formatDate, dateKey } from '../lib/dates'
 import { markBackedUp, untracked } from './changes'
-import type { ImportRecord, ImportRun, Loan, Reading, Work } from '../types'
+import type { GoodreadsRecord, ImportRecord, ImportRun, Loan, Reading, Work } from '../types'
 import type { CachedSearch } from '../storage/db'
 
 export const BACKUP_APP = 'too-many-books'
@@ -19,17 +19,19 @@ export interface BackupFile {
     importRecords: ImportRecord[]
     imports: ImportRun[]
     metadata: CachedSearch[]
+    /** Absent in backups made before Goodreads import existed. */
+    grRecords?: GoodreadsRecord[]
   }
 }
 
 export class BackupFormatError extends Error {}
 
 export async function createBackup(store: LibraryDB, now = new Date()): Promise<BackupFile> {
-  const [works, readings, loans, importRecords, imports, metadata] = await Promise.all([
+  const [works, readings, loans, importRecords, imports, metadata, grRecords] = await Promise.all([
     store.works.toArray(), store.readings.toArray(), store.loans.toArray(),
-    store.importRecords.toArray(), store.imports.toArray(), store.metadata.toArray(),
+    store.importRecords.toArray(), store.imports.toArray(), store.metadata.toArray(), store.grRecords.toArray(),
   ])
-  return { app: BACKUP_APP, formatVersion: BACKUP_FORMAT, exportedAt: now.toISOString(), tables: { works, readings, loans, importRecords, imports, metadata } }
+  return { app: BACKUP_APP, formatVersion: BACKUP_FORMAT, exportedAt: now.toISOString(), tables: { works, readings, loans, importRecords, imports, metadata, grRecords } }
 }
 
 export function backupFileName(now = new Date()): string {
@@ -67,6 +69,10 @@ export function validateBackup(json: unknown): { file: BackupFile; summary: Back
   for (const r of [...tables.readings, ...tables.loans]) {
     if (!workIds.has(r.workId)) throw new BackupFormatError('The backup is damaged: a reading or loan points to a book that is not in the file.')
   }
+  if (tables.grRecords !== undefined && !Array.isArray(tables.grRecords)) throw new BackupFormatError('The backup is damaged: its "grRecords" list is not a list.')
+  for (const r of tables.grRecords ?? []) {
+    if (typeof r?.bookId !== 'string' || typeof r.id !== 'number') throw new BackupFormatError('The backup is damaged: a Goodreads record has no Book Id.')
+  }
   for (const r of tables.importRecords) {
     if (typeof r?.key !== 'string' || typeof r.id !== 'number') throw new BackupFormatError('The backup is damaged: an import record has no key.')
   }
@@ -74,7 +80,7 @@ export function validateBackup(json: unknown): { file: BackupFile; summary: Back
     file: f as BackupFile,
     summary: {
       exportedAt: typeof f.exportedAt === 'string' ? f.exportedAt : '',
-      works: tables.works.length, readings: tables.readings.length, loans: tables.loans.length, importRecords: tables.importRecords.length,
+      works: tables.works.length, readings: tables.readings.length, loans: tables.loans.length, importRecords: tables.importRecords.length + (tables.grRecords?.length ?? 0),
     },
   }
 }
@@ -86,14 +92,15 @@ export function validateBackup(json: unknown): { file: BackupFile; summary: Back
 export async function restoreBackup(store: LibraryDB, file: BackupFile): Promise<void> {
   const t = file.tables
   await untracked(() =>
-    store.transaction('rw', [store.works, store.readings, store.loans, store.importRecords, store.imports, store.metadata], async () => {
-      await Promise.all([store.works.clear(), store.readings.clear(), store.loans.clear(), store.importRecords.clear(), store.imports.clear(), store.metadata.clear()])
+    store.transaction('rw', [store.works, store.readings, store.loans, store.importRecords, store.imports, store.metadata, store.grRecords], async () => {
+      await Promise.all([store.works.clear(), store.readings.clear(), store.loans.clear(), store.importRecords.clear(), store.imports.clear(), store.metadata.clear(), store.grRecords.clear()])
       await store.works.bulkAdd(t.works)
       await store.readings.bulkAdd(t.readings)
       await store.loans.bulkAdd(t.loans)
       await store.importRecords.bulkAdd(t.importRecords)
       await store.imports.bulkAdd(t.imports)
       await store.metadata.bulkAdd(t.metadata)
+      await store.grRecords.bulkAdd(t.grRecords ?? [])
     }),
   )
   markBackedUp()

@@ -1,17 +1,18 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { LibraryDB } from './db'
+import type { LibraryDB } from './db'
+import { db } from './instance'
+export { db }
 import { buildSeed } from './seed'
 import { untracked } from '../backup/changes'
 import { openLibrary } from '../metadata/openLibrary'
 import type { MetadataHit } from '../metadata/types'
 import { parseLibbyExport } from '../import/libby'
-import type { DatePart, Format, GenreId, ImportRecord, Reading, ReadingStatus, RecordState, Work, WorkDetail, WorkSummary } from '../types'
+import type { DatePart, Format, GenreId, GoodreadsRecord, ImportRecord, Reading, ReadingStatus, RecordState, Work, WorkDetail, WorkSummary } from '../types'
 
 /**
  * The only module screens talk to for data. Dexie stays behind this seam so a
  * synced backend could replace it (ADR 0001, ADR 0006).
  */
-export const db = new LibraryDB()
 
 /** Latest reading is the last one recorded for the Work. */
 const latestOf = (readings: Reading[]) => readings.at(-1)
@@ -289,4 +290,80 @@ export async function setDismissed(recordIds: number[], dismissed: boolean, stor
 /** Everything Stats needs; undefined while loading. */
 export function useReadingData(): { readings: Reading[]; works: Work[] } | undefined {
   return useLiveQuery(async () => ({ readings: await db.readings.toArray(), works: await db.works.toArray() }), [])
+}
+
+export function useGoodreads(state: RecordState): GoodreadsRecord[] | undefined {
+  return useLiveQuery(() => db.grRecords.where('state').equals(state).toArray(), [state])
+}
+
+// ---------- Editing ----------
+
+export interface ReadingEdit {
+  id?: number
+  status: ReadingStatus
+  format: Format
+  start?: DatePart
+  finish?: DatePart
+  rating?: number
+  review?: string
+}
+
+export interface WorkEdit {
+  title: string
+  author: string
+  genres: GenreId[]
+  tags: string[]
+  series?: { name: string; position: number }
+  pageCount?: number
+  wantToRead: boolean
+}
+
+/**
+ * Saves a Work and all its Readings in one transaction: readings missing from the list are
+ * removed, ones with an id are updated, ones without are added. Loans are never touched.
+ * These are the local edits that later imports must not overwrite (ADR 0003).
+ */
+export async function saveWorkEdits(workId: number, edit: WorkEdit, readings: ReadingEdit[], store: LibraryDB = db): Promise<void> {
+  if (!edit.title.trim()) throw new Error('A title is required')
+  await store.transaction('rw', store.works, store.readings, async () => {
+    const work = await store.works.get(workId)
+    if (!work) throw new Error('That book no longer exists')
+    const others = work.shelves.filter((s) => s !== 'want')
+    const next: Work = {
+      ...work,
+      title: edit.title.trim(),
+      author: edit.author.trim(),
+      genres: edit.genres,
+      tags: [...new Set(edit.tags.map((t) => t.trim()).filter(Boolean))],
+      series: edit.series?.name.trim() ? { name: edit.series.name.trim(), position: edit.series.position } : undefined,
+      pageCount: edit.pageCount,
+      shelves: edit.wantToRead ? [...others, 'want'] : others,
+    }
+    await store.works.put(next)
+    const keep = new Set(readings.map((r) => r.id).filter((x): x is number => x !== undefined))
+    const existing = await store.readings.where('workId').equals(workId).toArray()
+    await store.readings.bulkDelete(existing.filter((r) => !keep.has(r.id!)).map((r) => r.id!))
+    for (const r of readings) {
+      const row: Reading = {
+        workId,
+        status: r.status,
+        format: r.format,
+        start: r.start,
+        finish: r.status === 'reading' ? undefined : r.finish,
+        rating: r.rating,
+        review: r.review?.trim() || undefined,
+      }
+      if (r.id !== undefined) await store.readings.put({ ...row, id: r.id })
+      else await store.readings.add(row)
+    }
+  })
+}
+
+/** Removes a Work with its Readings and Loans. Import records are kept, so a later import does not re-propose it. */
+export async function deleteWork(workId: number, store: LibraryDB = db): Promise<void> {
+  await store.transaction('rw', store.works, store.readings, store.loans, async () => {
+    await store.readings.where('workId').equals(workId).delete()
+    await store.loans.where('workId').equals(workId).delete()
+    await store.works.delete(workId)
+  })
 }

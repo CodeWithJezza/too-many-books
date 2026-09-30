@@ -39,3 +39,21 @@ export function toDatePart(iso: string, precision: Precision): DatePart | undefi
   if (precision === 'month') return m ? { y, m } : { y }
   return m && d ? { y, m, d } : m ? { y, m } : { y }
 }
+
+/** The reverse of toDatePart: an ISO string and the precision a form field should open at. */
+export function fromDatePart(d?: DatePart): { iso: string; precision: Precision } {
+  if (!d) return { iso: '', precision: 'unknown' }
+  const p = (n: number) => String(n).padStart(2, '0')
+  return { iso: `${d.y}-${p(d.m ?? 1)}-${p(d.d ?? 1)}`, precision: d.m && d.d ? 'day' : d.m ? 'month' : 'year' }
+}
+
+const RANK: Record<Precision, number> = { unknown: 0, year: 1, month: 2, day: 3 }
+
+/**
+ * Changes a date field's precision without inventing data: going coarser keeps what is
+ * known, going finer (or leaving Unknown) empties the value so the reader must enter it.
+ */
+export function withPrecision(cur: { iso: string; precision: Precision }, precision: Precision): { iso: string; precision: Precision } {
+  if (precision === 'unknown') return { iso: cur.iso, precision }
+  return { iso: RANK[precision] > RANK[cur.precision] ? '' : cur.iso, precision }
+}

@@ -371,3 +371,38 @@ button.st-col[aria-pressed='true'] { background: var(--panel); box-shadow: 0 0 0
 /* Keep jacket foot labels on one line and mobile captions readable at three columns. */
 .band-foot { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: 0.08em; }
 @media (max-width: 759px) { .cap { white-space: normal; overflow: visible; min-height: 2.5em; font-size: 12px; } }
+
+.ib-source { font-size: 13px; font-weight: 600; color: var(--mute); }
+.ib-review { font-size: 15px; color: var(--mute); max-width: 60ch; }
+.ib-changes { display: grid; gap: 4px; margin-top: 6px; font-size: 15px; }
+
+/* ---------- edit book ---------- */
+.edit-btn { margin-top: 10px; min-height: 40px; padding: 0 16px; font-weight: 600; }
+.field.two { grid-template-columns: 2fr 1fr 1fr; gap: 12px; }
+.check { display: flex; align-items: center; gap: 12px; min-height: 44px; font-size: 16px; }
+.check input { width: 22px; height: 22px; accent-color: var(--accent); }
+.tag-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.tag-list li { display: inline-flex; align-items: center; gap: 4px; padding: 2px 4px 2px 12px; border: 1px solid var(--rule); border-radius: 99px; font-size: 15px; }
+.tag-list button { width: 32px; height: 32px; font-size: 20px; line-height: 1; border-radius: 50%; }
+.edit-readings { display: grid; gap: 18px; }
+.edit-reading { display: grid; gap: 16px; padding: 16px; border: 1px solid var(--rule); border-radius: 6px; background: var(--panel); min-width: 0; }
+.edit-reading legend { font-weight: 800; font-size: 15px; padding: 0 6px; }
+.danger-zone { display: grid; gap: 10px; padding-top: 24px; border-top: 1px solid var(--rule); }
+@media (max-width: 759px) { .field.two { grid-template-columns: minmax(0, 1fr); } }
+
+textarea, .input { font-family: inherit; }
+.tag-list button { display: grid; place-items: center; }
+.edit-readings > .btn-quiet { display: inline-flex; align-items: center; gap: 8px; justify-self: start; }
+
+.stars-input { gap: 6px 14px; }
+.stars-readout, .stars-input .btn-link { white-space: nowrap; }
+.star-slot { width: 48px; height: 48px; }
+.tag-list button { width: 40px; height: 40px; }
+
+.sticky-bar { position: sticky; bottom: 0; z-index: 2; display: grid; gap: 10px; padding: 14px 0; background: var(--bg); border-top: 1px solid var(--rule); }
+.sticky-bar .form-actions { padding-top: 0; }
+@media (max-width: 759px) { .sticky-bar { bottom: calc(64px + env(safe-area-inset-bottom)); } }
+
+.stars-input { gap: 0 14px; }
+.stars-side { display: inline-flex; align-items: center; gap: 14px; }
+.btn-link { display: inline-flex; align-items: center; min-height: 44px; padding: 0 8px; }

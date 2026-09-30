@@ -2,9 +2,9 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { Icon } from '../components/Icon'
 import { Jacket } from '../components/Jacket'
 import { StarsInput } from '../components/StarsInput'
-import { toDatePart, todayIso, type Precision } from '../lib/dates'
+import { DateField, Segmented, dateOk } from '../components/FormControls'
+import { toDatePart, todayIso, withPrecision, type Precision } from '../lib/dates'
 
-const dateOk = (iso: string, p: Precision) => p === 'unknown' || toDatePart(iso, p) !== undefined
 import { GENRES } from '../lib/genres'
 import { matchHit, searchLibrary } from '../lib/match'
 import { suggestGenres } from '../metadata/suggest'
@@ -28,55 +28,6 @@ const FORMATS: { id: Format; label: string }[] = [
   { id: 'ebook', label: 'Ebook' },
   { id: 'audiobook', label: 'Audiobook' },
 ]
-const PRECISIONS: { id: Precision; label: string }[] = [
-  { id: 'day', label: 'Day' },
-  { id: 'month', label: 'Month' },
-  { id: 'year', label: 'Year' },
-  { id: 'unknown', label: 'Unknown' },
-]
-
-function Segmented<T extends string>({ label, value, options, onChange }: {
-  label: string
-  value: T
-  options: { id: T; label: string }[]
-  onChange: (v: T) => void
-}) {
-  return (
-    <div className="segmented" role="radiogroup" aria-label={label}>
-      {options.map((o) => (
-        <button key={o.id} type="button" role="radio" aria-checked={value === o.id} onClick={() => onChange(o.id)}>{o.label}</button>
-      ))}
-    </div>
-  )
-}
-
-function DateField({ label, iso, precision, onIso, onPrecision }: {
-  label: string
-  iso: string
-  precision: Precision
-  onIso: (v: string) => void
-  onPrecision: (p: Precision) => void
-}) {
-  const id = useId()
-  return (
-    <fieldset className="field">
-      <legend>{label}</legend>
-      <Segmented label={`${label} precision`} value={precision} options={PRECISIONS} onChange={onPrecision} />
-      {precision === 'unknown' ? (
-        <p className="hint">Saved as unknown. It won't be guessed from anything else.</p>
-      ) : (
-        <>
-          <label className="sr-only" htmlFor={id}>{label}</label>
-          {precision === 'day' && <input id={id} className="input" type="date" value={iso} onChange={(e) => onIso(e.target.value)} />}
-          {precision === 'month' && <input id={id} className="input" type="month" value={iso.slice(0, 7)} onChange={(e) => onIso(`${e.target.value}-01`)} />}
-          {precision === 'year' && (
-            <input id={id} className="input" type="number" inputMode="numeric" min="1000" max="2999" value={iso.slice(0, 4)} onChange={(e) => onIso(`${e.target.value}-01-01`)} />
-          )}
-        </>
-      )}
-    </fieldset>
-  )
-}
 
 const previewWork = (title: string, author: string, genres: GenreId[], coverUrl?: string): WorkSummary => ({
   id: 0, title, author, genres, tags: [], shelves: [], readingCount: 0, coverUrl,
@@ -300,13 +251,13 @@ export function Add({ onSaved }: { onSaved: (workId: number) => void }) {
             </div>
 
             {status === 'reading' || hasStart ? (
-              <DateField label="Started" iso={start.iso} precision={start.precision} onIso={(iso) => setStart({ ...start, iso })} onPrecision={(precision) => setStart({ ...start, precision })} />
+              <DateField label="Started" iso={start.iso} precision={start.precision} onIso={(iso) => setStart({ ...start, iso })} onPrecision={(p) => setStart(withPrecision(start, p))} />
             ) : (
-              <button type="button" className="btn-link" onClick={() => setHasStart(true)}>+ Add a start date</button>
+              <button type="button" className="btn-link" onClick={() => setHasStart(true)}>Add a start date</button>
             )}
 
             {(status === 'finished' || status === 'dnf') && (
-              <DateField label={status === 'dnf' ? 'Stopped' : 'Finished'} iso={finish.iso} precision={finish.precision} onIso={(iso) => setFinish({ ...finish, iso })} onPrecision={(precision) => setFinish({ ...finish, precision })} />
+              <DateField label={status === 'dnf' ? 'Stopped' : 'Finished'} iso={finish.iso} precision={finish.precision} onIso={(iso) => setFinish({ ...finish, iso })} onPrecision={(p) => setFinish(withPrecision(finish, p))} />
             )}
 
             <div className="field">
@@ -337,7 +288,6 @@ export function Add({ onSaved }: { onSaved: (workId: number) => void }) {
           </fieldset>
         )}
 
-        {(startBad || finishBad) && <p className="form-error" role="alert">Enter a date, or choose Unknown.</p>}
         {error && <p className="form-error" role="alert">{error}</p>}
         <div className="form-actions sticky">
           <button type="submit" className="btn-primary" disabled={!canSave}>{status === 'want' ? 'Add to Want to read' : 'Save'}</button>

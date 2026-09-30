@@ -57,3 +57,14 @@ export function buildGroups(records: ImportRecord[], works: Work[]): InboxGroup[
 
 /** "Clean" means recognised exactly, so the Loans can simply be linked to a Work you already have. */
 export const isClean = (g: InboxGroup) => g.match?.kind === 'exact'
+
+/** Same three tiers for a Goodreads row: exact on a stored Book Id or ISBN, fuzzy on title and author, else none. */
+export function matchGoodreads(works: Work[], r: { bookId: string; isbn?: string; seen: { title: string; author: string } }): GroupMatch | undefined {
+  for (const w of works) {
+    const ids = w.externalIds
+    if (ids?.goodreads?.includes(r.bookId) || (r.isbn && ids?.isbn?.includes(r.isbn))) return { work: w, kind: 'exact' }
+  }
+  const k = nameKey(r.seen.title, r.seen.author)
+  for (const w of works) if (nameKey(w.title, w.author) === k) return { work: w, kind: 'fuzzy' }
+  return undefined
+}

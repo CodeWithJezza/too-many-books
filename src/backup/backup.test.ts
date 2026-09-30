@@ -76,3 +76,22 @@ describe('readingsCsv', () => {
     expect(csv).toContain('Mar 2026,month,4.5')
   })
 })
+
+import csvSample from '../import/fixtures/goodreads-sample.csv?raw'
+import { importGoodreads } from '../storage/goodreads'
+describe('backup with Goodreads records', () => {
+  it('round-trips Goodreads records so a restore does not refill the Inbox', async () => {
+    await importGoodreads(csvSample, 'g.csv', db)
+    const file = validateBackup(JSON.parse(JSON.stringify(await createBackup(db)))).file
+    await db.grRecords.clear()
+    await restoreBackup(db, file)
+    expect(await db.grRecords.count()).toBe(5)
+    expect(await importGoodreads(csvSample, 'g2.csv', db)).toMatchObject({ added: 0, unchanged: 5 })
+  })
+  it('accepts an older backup that has no Goodreads table', async () => {
+    const old = JSON.parse(JSON.stringify(await createBackup(db)))
+    delete old.tables.grRecords
+    await restoreBackup(db, validateBackup(old).file)
+    expect(await db.grRecords.count()).toBe(0)
+  })
+})

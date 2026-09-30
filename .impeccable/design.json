@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-09-30T12:00:00Z",
+  "generatedAt": "2026-09-30T18:00:00Z",
   "title": "Design System: Too Many Books",
   "extensions": {
     "colorMeta": {
@@ -292,7 +292,7 @@
       },
       "body-sm": {
         "displayName": "Body Small",
-        "purpose": "Tabs, segmented options, genre picks, reviews, notes (15px)."
+        "purpose": "Tabs, segmented options, genre picks, tag chips, changes list, reviews, notes (15px)."
       },
       "caption": {
         "displayName": "Caption",
@@ -450,9 +450,9 @@
       "name": "Half-star Input",
       "kind": "input",
       "refersTo": "star-slot",
-      "description": "Five 44px slots, each with left and right half buttons for 0.5 steps.",
+      "description": "Five 48px slots, each with left and right half buttons for 0.5 steps; each instance owns its clip ids.",
       "html": "<div class=\"ds-stars\"><span class=\"ds-slot\"><svg width=\"36\" height=\"36\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2 6.3 20.3l1.2-6.4L2.8 9.5l6.4-.8z\" class=\"ds-off\"/><path d=\"M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2 6.3 20.3l1.2-6.4L2.8 9.5l6.4-.8z\" class=\"ds-on\" style=\"clip-path:inset(0 50% 0 0)\"/></svg><button class=\"ds-half ds-l\" aria-label=\"0.5 stars\"></button><button class=\"ds-half ds-r\" aria-label=\"1 star\"></button></span><span class=\"ds-read\">0.5 of 5</span></div>",
-      "css": ".ds-stars { display:flex; align-items:center; gap:14px; font-family:'Jost Variable',system-ui,sans-serif;} .ds-slot { position:relative; width:44px; height:44px; display:grid; place-items:center; } .ds-off { fill:var(--star-fill,#ddd0ac); stroke:var(--star-off,#8a7a52); stroke-width:1.4; stroke-linejoin:round; } .ds-on { fill:var(--accent,#c9500f); } .ds-half { position:absolute; top:0; bottom:0; width:50%; border:0; background:none; cursor:pointer; } .ds-l { left:0; } .ds-r { right:0; } .ds-half:focus-visible { outline:3px solid var(--accent,#c9500f); outline-offset:-2px; } .ds-read { font-size:14px; color:var(--mute,#6b5d48); }"
+      "css": ".ds-stars { display:flex; align-items:center; gap:14px; font-family:'Jost Variable',system-ui,sans-serif;} .ds-slot { position:relative; width:48px; height:48px; display:grid; place-items:center; } .ds-off { fill:var(--star-fill,#ddd0ac); stroke:var(--star-off,#8a7a52); stroke-width:1.4; stroke-linejoin:round; } .ds-on { fill:var(--accent,#c9500f); } .ds-half { position:absolute; top:0; bottom:0; width:50%; border:0; background:none; cursor:pointer; } .ds-l { left:0; } .ds-r { right:0; } .ds-half:focus-visible { outline:3px solid var(--accent,#c9500f); outline-offset:-2px; } .ds-read { font-size:14px; color:var(--mute,#6b5d48); }"
     },
     {
       "name": "Inbox Group Row",
@@ -474,9 +474,9 @@
       "name": "Sticky Action Bar",
       "kind": "custom",
       "refersTo": "action-bar-sticky",
-      "description": "Save bar pinned under the Add form: papyrus fill, tan top rule.",
+      "description": "Save bar pinned under the Add and Edit book forms: papyrus fill, tan top rule; on Edit book it hosts the inline discard confirm.",
       "html": "<div class=\"ds-bar\"><button class=\"ds-bp\">Save book</button><span class=\"ds-berr\">Add a title to save.</span></div>",
-      "css": ".ds-bar { display:flex; align-items:center; gap:16px; flex-wrap:wrap; padding:14px 0; background:var(--bg,#f2ead6); border-top:1px solid var(--rule,#d2c4a1); font-family:'Jost Variable',system-ui,sans-serif;} .ds-bp { min-height:52px; padding:0 28px; border:0; border-radius:4px; background:var(--accent,#c9500f); color:var(--onaccent,#fff); font:inherit; font-size:17px; font-weight:700; cursor:pointer; } .ds-bp:focus-visible { outline:3px solid var(--accent,#c9500f); outline-offset:3px; } .ds-berr { color:var(--error,#a3260f); font-weight:600; }"
+      "css": ".ds-bar { display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:14px 0; background:var(--bg,#f2ead6); border-top:1px solid var(--rule,#d2c4a1); font-family:'Jost Variable',system-ui,sans-serif;} .ds-bp { min-height:52px; padding:0 28px; border:0; border-radius:4px; background:var(--accent,#c9500f); color:var(--onaccent,#fff); font:inherit; font-size:17px; font-weight:700; cursor:pointer; } .ds-bp:focus-visible { outline:3px solid var(--accent,#c9500f); outline-offset:3px; } .ds-berr { color:var(--error,#a3260f); font-weight:600; }"
     },
     {
       "name": "Undo Bar",
@@ -501,11 +501,35 @@
       "description": "Fixed ink notice for update-ready and offline-ready.",
       "html": "<p class=\"ds-toast\" role=\"status\">A new version is ready. <button class=\"ds-tl\">Reload</button></p>",
       "css": ".ds-toast { display:inline-block; max-width:420px; margin:0; padding:14px 18px; background:var(--ink,#2b2218); color:var(--bg,#f2ead6); border-radius:6px; box-shadow:0 12px 28px rgba(40,25,5,.3); font-weight:500; font-family:'Jost Variable',system-ui,sans-serif; } .ds-tl { min-height:44px; padding:0 4px; border:0; background:none; color:inherit; font:inherit; text-decoration:underline; text-decoration-color:var(--accent,#c9500f); text-decoration-thickness:2px; text-underline-offset:4px; cursor:pointer; } .ds-tl:focus-visible { outline:3px solid var(--accent,#c9500f); outline-offset:3px; }"
+    },
+    {
+      "name": "Tag Chip",
+      "kind": "chip",
+      "refersTo": "tag-chip",
+      "description": "Outlined tag with an icon remove button (40px as built, an open item).",
+      "html": "<ul class=\"ds-tags\"><li>reread<button aria-label=\"Remove tag reread\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" aria-hidden=\"true\"><path d=\"M6 6l12 12M18 6L6 18\"/></svg></button></li><li>book club<button aria-label=\"Remove tag book club\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" aria-hidden=\"true\"><path d=\"M6 6l12 12M18 6L6 18\"/></svg></button></li></ul>",
+      "css": ".ds-tags { display:flex; flex-wrap:wrap; gap:8px; margin:0; padding:0; list-style:none; font-family:'Jost Variable',system-ui,sans-serif; } .ds-tags li { display:inline-flex; align-items:center; gap:4px; padding:2px 4px 2px 12px; border:1px solid var(--rule,#d2c4a1); border-radius:99px; font-size:15px; color:var(--ink,#2b2218); } .ds-tags button { display:grid; place-items:center; width:40px; height:40px; border:0; border-radius:50%; background:none; color:inherit; cursor:pointer; } .ds-tags button:focus-visible { outline:3px solid var(--accent,#c9500f); outline-offset:1px; }"
+    },
+    {
+      "name": "Reading Fieldset with Date Field",
+      "kind": "card",
+      "refersTo": "reading-fieldset",
+      "description": "Edit book reading in panel fill: shared Segmented, date precision, inline date error.",
+      "html": "<fieldset class=\"ds-rf\"><legend>Reading 1</legend><div class=\"ds-seg\"><button aria-checked=\"false\">Reading now</button><button aria-checked=\"true\">Finished</button><button aria-checked=\"false\">DNF</button></div><div class=\"ds-df\"><span class=\"ds-lab\">Finished</span><div class=\"ds-seg\"><button aria-checked=\"false\">Day</button><button aria-checked=\"true\">Month</button><button aria-checked=\"false\">Year</button><button aria-checked=\"false\">Unknown</button></div><input class=\"ds-in\" value=\"\" aria-invalid=\"true\"><p class=\"ds-err\" role=\"alert\">Enter a date, or choose Unknown.</p></div><button class=\"ds-lk\">Remove this reading</button></fieldset>",
+      "css": ".ds-rf { display:grid; gap:16px; width:360px; margin:0; padding:16px; border:1px solid var(--rule,#d2c4a1); border-radius:6px; background:var(--panel,#ece1c6); color:var(--ink,#2b2218); font-family:'Jost Variable',system-ui,sans-serif; } .ds-rf legend { padding:0 6px; font-size:15px; font-weight:800; } .ds-df { display:grid; gap:8px; } .ds-lab { font-size:13px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--mute,#6b5d48); } .ds-seg { display:flex; flex-wrap:wrap; gap:8px; } .ds-seg button { min-height:44px; padding:0 16px; border:1px solid var(--rule,#d2c4a1); border-radius:99px; background:none; color:inherit; font:inherit; font-size:15px; font-weight:500; cursor:pointer; } .ds-seg button[aria-checked='true'] { background:var(--ink,#2b2218); color:var(--bg,#f2ead6); border-color:var(--ink,#2b2218); font-weight:600; } .ds-in { min-height:48px; padding:0 14px; border:1px solid var(--rule,#d2c4a1); border-radius:6px; background:var(--card,#fbf6e7); color:#2b2218; font:inherit; font-size:16px; } .ds-err { margin:0; color:var(--error,#a3260f); font-weight:600; } .ds-lk { justify-self:start; min-height:44px; padding:0 8px; border:0; background:none; color:inherit; font:inherit; font-weight:600; text-decoration:underline; text-decoration-color:var(--accent,#c9500f); text-decoration-thickness:2px; text-underline-offset:3px; cursor:pointer; } .ds-seg button:focus-visible, .ds-lk:focus-visible, .ds-in:focus-visible { outline:3px solid var(--accent,#c9500f); outline-offset:2px; }"
+    },
+    {
+      "name": "Goodreads Update Row",
+      "kind": "card",
+      "refersTo": "changes-list",
+      "description": "Inbox row with source in the meta line, a changed-fields diff list, and Apply changes / Keep mine.",
+      "html": "<div class=\"ds-gr\"><div class=\"ds-mini\"></div><div class=\"ds-grm\"><b class=\"ds-grt\">Piranesi</b><span class=\"ds-gra\">Susanna Clarke</span><span class=\"ds-grl\">Changed at Goodreads since you last took its values:</span><ul class=\"ds-chg\"><li>Rating: 3 stars → 4.5 stars</li><li>Shelf: Reading now → Read</li></ul><span class=\"ds-grn\">Anything you have edited here since is left as you set it.</span><div class=\"ds-gact\"><button class=\"ds-gp\">Apply changes</button><button class=\"ds-gq\">Keep mine</button></div></div></div>",
+      "css": ".ds-gr { display:flex; gap:16px; width:520px; padding:18px 0; border-bottom:1px solid var(--rule,#d2c4a1); color:var(--ink,#2b2218); font-family:'Jost Variable',system-ui,sans-serif; } .ds-mini { width:72px; height:108px; flex:none; background:linear-gradient(#a3286b 22%,var(--card,#fbf6e7) 22% 86%,#a3286b 86%); box-shadow:0 1px 2px rgba(40,25,5,.28),0 8px 16px rgba(40,25,5,.16); } .ds-grm { display:grid; gap:3px; justify-items:start; } .ds-grt { font-size:20px; font-weight:800; line-height:1.15; } .ds-gra { font-size:16px; } .ds-grl { font-size:14px; color:var(--mute,#6b5d48); } .ds-chg { display:grid; gap:4px; margin:6px 0 0; padding:0; list-style:none; font-size:15px; } .ds-grn { margin-top:4px; font-size:13px; color:var(--mute,#6b5d48); } .ds-gact { display:flex; gap:10px; align-items:center; margin-top:12px; } .ds-gp { min-height:44px; padding:0 20px; border:0; border-radius:4px; background:var(--accent,#c9500f); color:var(--onaccent,#fff); font:inherit; font-size:16px; font-weight:700; cursor:pointer; } .ds-gq { min-height:44px; padding:0 18px; border:1px solid var(--ink,#2b2218); border-radius:4px; background:none; color:inherit; font:inherit; font-weight:600; cursor:pointer; } .ds-gp:focus-visible, .ds-gq:focus-visible { outline:3px solid var(--accent,#c9500f); outline-offset:3px; }"
     }
   ],
   "narrative": {
     "northStar": "The Banded Paperback",
-    "overview": "The library is a wall of paperback jackets on eggshell paper. Genre is colour, the covers lead, and the chrome (sidebar, panel, filters) sits quietly in tones of the same paper. The ground is warm papyrus rather than white or grey, and all ink is warm brown rather than black. One burnt orange is the only UI accent; every other saturated colour belongs to a Genre and appears on a jacket band.\n\nThe system is dense but calm: a three-column shell (sidebar, jacket wall, Work panel) with generous 20 to 30px gutters between objects and tight, flat control chrome. Type is a single geometric sans (Jost) at heavy weights for titles and small tracked capitals for band labels, which echo printed paperback spines. Depth comes from tonal paper layers and from the jackets casting soft shadows like objects on a table.\n\nStats extends it with one more idea: a chart is a stack of books. Each finished book is one flat genre-ink block (a spine), so a column's height is a literal count, and horizontal bars sit on a Panel Parchment track. Task screens (Add, Inbox, Settings, Stats) extend the same world: lists and forms are quiet ruled rows on the papyrus ground, and a jacket appears only where a book is being chosen or shaped (mini jacket beside an Inbox group, live preview beside the Add form). A warm dark theme (toggle) swaps the paper for brown-black and lifts the accent, but jackets stay cream so the wall still reads as objects.",
+    "overview": "The library is a wall of paperback jackets on eggshell paper. Genre is colour, the covers lead, and the chrome (sidebar, panel, filters) sits quietly in tones of the same paper. The ground is warm papyrus rather than white or grey, and all ink is warm brown rather than black. One burnt orange is the only UI accent; every other saturated colour belongs to a Genre and appears on a jacket band.\n\nThe system is dense but calm: a three-column shell (sidebar, jacket wall, Work panel) with generous 20 to 30px gutters between objects and tight, flat control chrome. Type is a single geometric sans (Jost) at heavy weights for titles and small tracked capitals for band labels, which echo printed paperback spines. Depth comes from tonal paper layers and from the jackets casting soft shadows like objects on a table.\n\nStats extends it with one more idea: a chart is a stack of books. Each finished book is one flat genre-ink block (a spine), so a column's height is a literal count, and horizontal bars sit on a Panel Parchment track. Task screens (Add, Inbox, Settings, Stats) extend the same world: lists and forms are quiet ruled rows on the papyrus ground, and a jacket appears only where a book is being chosen or shaped (mini jacket beside an Inbox group or Goodreads row, live preview beside the Add and Edit book forms). A warm dark theme (toggle) swaps the paper for brown-black and lifts the accent, but jackets stay cream so the wall still reads as objects.",
     "keyCharacteristics": [
       "Eggshell/papyrus light default; warm dark brown theme by toggle, never stark white, grey, or pure black.",
       "Genre ink is a flat band colour on the jacket and its chips; white text on every genre ink.",
@@ -560,6 +584,11 @@
         "name": "The Flat Bars Rule",
         "body": "Sticky bars, summaries, and confirm panels separate by a tan hairline or tonal fill, never a shadow. Stats charts follow it: spines and fills are flat colour with no shadow or gradient, tracks are a Panel Parchment fill, and a selected year column takes a tonal fill plus a 2px ink ring.",
         "section": "elevation"
+      },
+      {
+        "name": "The Unknown Stays Unknown Rule",
+        "body": "Changing a date's precision never invents a value. Going finer than what is known (Year to Month, Month to Day, or leaving Unknown) empties the date so the reader must enter it; going coarser keeps the value; choosing Unknown saves nothing.",
+        "section": "components"
       }
     ],
     "dos": [
@@ -569,7 +598,9 @@
       "Do mark selection with the double ink ring and a 4px lift on jackets, and with an ink fill on pills, options, and results.",
       "Do confirm or offer Undo for every destructive or bulk step; the confirm names the outcome.",
       "Do pick type from the closed ramp and keep touch targets at or above 44px; honour `prefers-reduced-motion`.",
-      "Do show unknown as unknown (\"Unrated\"), not as a zero state.",
+      "Do show unknown as unknown (\"Unrated\", \"unknown\" date), not as a zero state, and never fill a date the reader has not given (The Unknown Stays Unknown Rule).",
+      "Do state a data source in the meta line as plain words and reuse the shared Segmented and Date field for choices instead of building new ones.",
+      "Do give every repeated control instance its own ids (star clips, date fields, review labels).",
       "Do let a real cover replace the jacket middle while keeping both bands."
     ],
     "donts": [
