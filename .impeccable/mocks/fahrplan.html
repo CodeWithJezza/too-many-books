@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Too Many Books – Fahrplan sketch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#141416; --ink-2:#1c1c20; --rule:#3a3a40; --mute:#9d9da3; --paper:#ecece6;
+  --yellow:#f4c400; --red:#e8281e;
+  --g1:#f4c400; --g2:#e8281e; --g3:#3b7dd8; --g4:#2f9e6b; --g5:#e9e9e4; --g6:#9a6bd1;
+}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{background:#0a0a0b;color:var(--paper);font-family:Archivo,system-ui,sans-serif;font-stretch:100%;font-variant-numeric:tabular-nums;display:grid;place-items:center;padding:16px}
+::selection{background:var(--yellow);color:var(--ink)}
+.ipad{width:min(1180px,100%);aspect-ratio:1180/820;background:var(--ink);border-radius:22px;overflow:hidden;display:grid;grid-template-columns:200px 1fr 380px;border:1px solid #2a2a2e}
+nav{border-right:1px solid var(--rule);padding:22px 0;display:flex;flex-direction:column}
+.brand{padding:0 20px 22px;font-stretch:62%;font-weight:800;font-size:22px;line-height:.95;text-transform:uppercase;letter-spacing:.01em;color:var(--yellow)}
+nav a{display:flex;justify-content:space-between;align-items:center;padding:11px 20px;font-size:15px;font-weight:600;color:var(--paper);text-decoration:none;border-top:1px solid var(--rule)}
+nav a:last-of-type{border-bottom:1px solid var(--rule)}
+nav a.on{background:var(--yellow);color:var(--ink)}
+nav .badge{background:var(--red);color:#fff;font-size:12px;font-weight:800;min-width:26px;text-align:center;padding:2px 6px;border-radius:99px}
+nav .add{margin:auto 20px 0;background:var(--paper);color:var(--ink);font:800 15px Archivo;padding:13px;border:0;border-radius:4px;letter-spacing:.02em}
+main{display:flex;flex-direction:column;min-width:0}
+.head{display:flex;align-items:baseline;justify-content:space-between;padding:22px 24px 14px}
+.head h1{font-stretch:75%;font-weight:800;font-size:40px;letter-spacing:-.01em;line-height:1}
+.head span{color:var(--mute);font-size:13px}
+.filters{display:flex;gap:8px;padding:0 24px 14px;font-size:13px;font-weight:600}
+.filters b{padding:6px 12px;border:1px solid var(--rule);border-radius:99px;font-weight:600}
+.filters b.on{background:var(--paper);color:var(--ink);border-color:var(--paper)}
+.filters i{margin-left:auto;font-style:normal;color:var(--mute);padding:6px 0}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{background:var(--yellow);color:var(--ink);text-align:left;font-size:11px;letter-spacing:.09em;text-transform:uppercase;font-weight:800;padding:8px 10px;position:sticky;top:0}
+th:first-child,td:first-child{padding-left:24px}
+th.n,td.n{text-align:right}
+td{padding:8px 10px;border-bottom:1px solid var(--rule);white-space:nowrap}
+tr.sel td{background:var(--paper);color:var(--ink);border-color:var(--paper)}
+tr.sel .a{color:#44444a}
+.cv{width:30px;height:44px;border-radius:2px;display:grid;place-items:end start;padding:3px;color:var(--ink);box-shadow:1px 2px 4px rgb(0 0 0 / .35)}
+.t{font-weight:700;font-size:15px}
+.a{color:var(--mute);font-size:13px}
+.gd{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:7px}
+.unk{color:var(--mute);font-style:italic}
+.scroll{overflow:hidden;flex:1;min-height:0}
+aside{border-left:1px solid var(--rule);background:var(--ink-2);padding:22px 24px;display:flex;flex-direction:column;gap:16px;overflow:hidden}
+.wk{display:flex;gap:16px}
+.wk .cv{width:84px;height:124px;font-size:14px;padding:8px;flex:none;border-radius:3px}
+.wk h2{font-stretch:75%;font-weight:800;font-size:30px;line-height:1;letter-spacing:-.01em}
+.wk .a{margin-top:6px;font-size:14px}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;font-size:12px;font-weight:600}
+.tags b{border:1px solid var(--rule);padding:3px 9px;border-radius:99px;font-weight:600}
+h3{font-size:11px;letter-spacing:.09em;text-transform:uppercase;font-weight:800;background:var(--yellow);color:var(--ink);padding:7px 10px}
+.dep{display:grid;grid-template-columns:62px 1fr auto;gap:0 12px;align-items:baseline;padding:10px;border-bottom:1px solid var(--rule);font-size:14px}
+.dep .d{font-weight:800;font-size:15px}
+.dep .m{color:var(--mute);font-size:12px;grid-column:2}
+.stars{color:var(--yellow);letter-spacing:.06em;font-size:14px;grid-row:1;grid-column:3}
+.note{font-size:12px;color:var(--mute);margin-top:auto;border-top:1px solid var(--rule);padding-top:10px}
+.stat{display:grid;grid-template-columns:auto 1fr;gap:2px 14px;font-size:12px;color:var(--mute)}
+.stat b{font-size:26px;color:var(--paper);font-weight:800;font-stretch:75%;grid-row:span 2;align-self:center}
+</style>
+</head>
+<body>
+<div class="ipad">
+  <nav>
+    <div class="brand">Too<br>Many<br>Books</div>
+    <a class="on" href="#">Library <span>412</span></a>
+    <a href="#">Inbox <span class="badge">37</span></a>
+    <a href="#">Stats</a>
+    <a href="#">Settings</a>
+    <button class="add">+ Add a book</button>
+  </nav>
+
+  <main>
+    <div class="head"><h1>Library</h1><span>Sample data, not real</span></div>
+    <div class="filters"><b class="on">All</b><b>Read</b><b>Reading</b><b>Want to read</b><b>Series</b><i>Sort: finished, newest</i></div>
+    <div class="scroll">
+    <table>
+      <thead><tr><th style="width:70px"></th><th>Title</th><th>Genre</th><th>Format</th><th>Finished</th><th class="n">Rating</th></tr></thead>
+      <tbody>
+        <tr class="sel"><td><div class="cv" style="background:var(--g3)"></div></td><td><div class="t">Project Hail Mary</div><div class="a">Andy Weir</div></td><td><span class="gd" style="background:var(--g3)"></span>Sci-fi</td><td>Audiobook</td><td>12 Sep 2026</td><td class="n">★★★★★</td></tr>
+        <tr><td><div class="cv" style="background:var(--g4)"></div></td><td><div class="t">Piranesi</div><div class="a">Susanna Clarke</div></td><td><span class="gd" style="background:var(--g4)"></span>Fantasy</td><td>Ebook</td><td>Aug 2026</td><td class="n">★★★★½</td></tr>
+        <tr><td><div class="cv" style="background:var(--g2);color:#fff"></div></td><td><div class="t">Wolf Hall</div><div class="a">Hilary Mantel</div></td><td><span class="gd" style="background:var(--g2)"></span>Historical</td><td>Print</td><td>Jul 2026</td><td class="n">★★★★</td></tr>
+        <tr><td><div class="cv" style="background:var(--g1)"></div></td><td><div class="t">Leviathan Wakes</div><div class="a">James S. A. Corey · Expanse #1</div></td><td><span class="gd" style="background:var(--g3)"></span>Sci-fi</td><td>Audiobook</td><td>2025</td><td class="n"><span class="unk">unrated</span></td></tr>
+        <tr><td><div class="cv" style="background:var(--g5)"></div></td><td><div class="t">The Left Hand of Darkness</div><div class="a">Ursula K. Le Guin</div></td><td><span class="gd" style="background:var(--g3)"></span>Sci-fi</td><td>Ebook</td><td><span class="unk">date unknown</span></td><td class="n">★★★★</td></tr>
+        <tr><td><div class="cv" style="background:var(--g6);color:#fff"></div></td><td><div class="t">Circe</div><div class="a">Madeline Miller</div></td><td><span class="gd" style="background:var(--g4)"></span>Fantasy</td><td>Ebook</td><td>Mar 2026</td><td class="n">★★★★★</td></tr>
+        <tr><td><div class="cv" style="background:var(--g3);color:#fff"></div></td><td><div class="t">Neuromancer</div><div class="a">William Gibson</div></td><td><span class="gd" style="background:var(--g3)"></span>Sci-fi</td><td>Print</td><td>DNF · Feb 2026</td><td class="n">★★</td></tr>
+        <tr><td><div class="cv" style="background:var(--g4)"></div></td><td><div class="t">The Goblin Emperor</div><div class="a">Katherine Addison</div></td><td><span class="gd" style="background:var(--g4)"></span>Fantasy</td><td>Ebook</td><td>Jan 2026</td><td class="n">★★★★½</td></tr>
+        <tr><td><div class="cv" style="background:var(--g2);color:#fff"></div></td><td><div class="t">Hamnet</div><div class="a">Maggie O'Farrell</div></td><td><span class="gd" style="background:var(--g2)"></span>Historical</td><td>Print</td><td>Dec 2025</td><td class="n">★★★★</td></tr>
+        <tr><td><div class="cv" style="background:var(--g1)"></div></td><td><div class="t">The Lies of Locke Lamora</div><div class="a">Scott Lynch</div></td><td><span class="gd" style="background:var(--g4)"></span>Fantasy</td><td>Audiobook</td><td>Nov 2025</td><td class="n">★★★★½</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </main>
+
+  <aside>
+    <div class="wk">
+      <div class="cv" style="background:var(--g3);color:#fff">PHM</div>
+      <div>
+        <h2>Project Hail Mary</h2>
+        <div class="a">Andy Weir · 476 pp</div>
+        <div class="tags"><b>Sci-fi</b><b>first contact</b><b>science-y</b></div>
+      </div>
+    </div>
+    <div>
+      <h3>Readings</h3>
+      <div class="dep"><span class="d">12 Sep</span><span>Audiobook · Finished</span><span class="stars">★★★★★</span><span class="m">2026 · started 3 Aug</span></div>
+      <div class="dep"><span class="d">2022</span><span>Ebook · Finished</span><span class="stars">★★★★½</span><span class="m">Year only · start unknown</span></div>
+    </div>
+    <div>
+      <h3>Loans</h3>
+      <div class="dep"><span class="d">Aug 26</span><span>Libby · Borrowed</span><span></span><span class="m">Linked to the 2026 reading</span></div>
+    </div>
+    <div class="stat"><b>2</b><span>readings of this Work</span><span>Merge with another edition…</span></div>
+    <p class="note">Ruled columns, one signal yellow, red only for what needs you. Covers are placeholders.</p>
+  </aside>
+</div>
+</body>
+</html>

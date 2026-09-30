@@ -1,0 +1,584 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-30T12:00:00Z",
+  "title": "Design System: Too Many Books",
+  "extensions": {
+    "colorMeta": {
+      "accent": {
+        "role": "primary",
+        "displayName": "Burnt Orange",
+        "canonical": "#c9500f",
+        "tonalRamp": [
+          "#471c05",
+          "#772f09",
+          "#a6420c",
+          "#d65510",
+          "#f17f41",
+          "#f5a57a",
+          "#facfb8",
+          "#fdefe7"
+        ]
+      },
+      "accent-dark": {
+        "role": "primary",
+        "displayName": "Burnt Orange (dark theme)",
+        "canonical": "#e8792b",
+        "tonalRamp": [
+          "#452107",
+          "#73370c",
+          "#a14d11",
+          "#cf6316",
+          "#eb8b47",
+          "#f1ae7e",
+          "#f8d3ba",
+          "#fdf0e8"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Warm Ink",
+        "canonical": "#2b2218",
+        "tonalRamp": [
+          "#31271b",
+          "#52412e",
+          "#735b40",
+          "#937452",
+          "#b69b7c",
+          "#ccb9a3",
+          "#e4d9ce",
+          "#f6f2ef"
+        ]
+      },
+      "muted-ink": {
+        "role": "neutral",
+        "displayName": "Muted Ink",
+        "canonical": "#6b5d48",
+        "tonalRamp": [
+          "#2e281f",
+          "#4c4233",
+          "#6b5d48",
+          "#89775c",
+          "#ad9d85",
+          "#c6baaa",
+          "#e0dad1",
+          "#f5f3f0"
+        ]
+      },
+      "papyrus": {
+        "role": "neutral",
+        "displayName": "Papyrus",
+        "canonical": "#f2ead6",
+        "tonalRamp": [
+          "#3a2f12",
+          "#614e1f",
+          "#886d2b",
+          "#ae8c37",
+          "#ceb064",
+          "#ddc793",
+          "#ede1c5",
+          "#f9f5ec"
+        ]
+      },
+      "sidebar-vellum": {
+        "role": "neutral",
+        "displayName": "Sidebar Vellum",
+        "canonical": "#e7dbbb",
+        "tonalRamp": [
+          "#392f14",
+          "#5e4e21",
+          "#846d2f",
+          "#aa8c3c",
+          "#caaf68",
+          "#dac795",
+          "#ebe1c6",
+          "#f8f5ec"
+        ]
+      },
+      "panel-parchment": {
+        "role": "neutral",
+        "displayName": "Panel Parchment",
+        "canonical": "#ece1c6",
+        "tonalRamp": [
+          "#392e13",
+          "#604d20",
+          "#866c2d",
+          "#ac8b39",
+          "#ccae66",
+          "#dbc794",
+          "#ece1c6",
+          "#f9f5ec"
+        ]
+      },
+      "jacket-cream": {
+        "role": "neutral",
+        "displayName": "Jacket Cream",
+        "canonical": "#fbf6e7",
+        "tonalRamp": [
+          "#42340b",
+          "#6d5712",
+          "#997919",
+          "#c59c21",
+          "#e2bd50",
+          "#ebd185",
+          "#f4e6bd",
+          "#fbf7e9"
+        ]
+      },
+      "rule-tan": {
+        "role": "neutral",
+        "displayName": "Tan Rule",
+        "canonical": "#d2c4a1",
+        "tonalRamp": [
+          "#342c19",
+          "#564929",
+          "#79673a",
+          "#9b844a",
+          "#bda875",
+          "#d1c29e",
+          "#e6dfcb",
+          "#f7f4ee"
+        ]
+      },
+      "genre-scifi": {
+        "role": "secondary",
+        "displayName": "Sci-fi Blue",
+        "canonical": "#1f3e8c",
+        "tonalRamp": [
+          "#0e1c3f",
+          "#172e68",
+          "#204192",
+          "#2a53bc",
+          "#587dda",
+          "#8aa4e5",
+          "#c0cef1",
+          "#eaeffa"
+        ]
+      },
+      "genre-fantasy": {
+        "role": "secondary",
+        "displayName": "Fantasy Green",
+        "canonical": "#2e7d4f",
+        "tonalRamp": [
+          "#153823",
+          "#225d3b",
+          "#308252",
+          "#3ea86a",
+          "#6ac891",
+          "#97d9b2",
+          "#c7ead6",
+          "#ecf8f1"
+        ]
+      },
+      "genre-historical": {
+        "role": "secondary",
+        "displayName": "Historical Magenta",
+        "canonical": "#a3286b",
+        "tonalRamp": [
+          "#3d0f28",
+          "#661943",
+          "#8f235e",
+          "#b82d79",
+          "#d75b9f",
+          "#e38cbb",
+          "#f0c2db",
+          "#faebf3"
+        ]
+      },
+      "error": {
+        "role": "secondary",
+        "displayName": "Rust Error",
+        "canonical": "#a3260f",
+        "tonalRamp": [
+          "#3a0f06",
+          "#5f1809",
+          "#84200c",
+          "#a3260f",
+          "#cc5a3f",
+          "#e08d78",
+          "#f0c3b7",
+          "#fbebe7"
+        ]
+      },
+      "error-dark": {
+        "role": "secondary",
+        "displayName": "Rust Error (dark theme)",
+        "canonical": "#ff9a6b",
+        "tonalRamp": [
+          "#4d1f0a",
+          "#7d3512",
+          "#b3501c",
+          "#e87838",
+          "#ff9a6b",
+          "#ffb996",
+          "#ffd8c4",
+          "#fff1ea"
+        ]
+      },
+      "star-off": {
+        "role": "neutral",
+        "displayName": "Star Outline",
+        "canonical": "#8a7a52",
+        "tonalRamp": [
+          "#2a2418",
+          "#443b26",
+          "#5f5236",
+          "#8a7a52",
+          "#a99b76",
+          "#c5baa0",
+          "#e0d9c9",
+          "#f5f2ec"
+        ]
+      },
+      "star-fill": {
+        "role": "neutral",
+        "displayName": "Star Fill",
+        "canonical": "#ddd0ac",
+        "tonalRamp": [
+          "#4a4020",
+          "#6f6234",
+          "#948550",
+          "#b9a878",
+          "#ddd0ac",
+          "#e8dfc4",
+          "#f2ecdb",
+          "#faf8f0"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Screen title (36px)."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Work title in the panel (27px)."
+      },
+      "title": {
+        "displayName": "Jacket Title",
+        "purpose": "Scales with jacket width by container query."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Inputs, row and result titles, most buttons (16px)."
+      },
+      "label": {
+        "displayName": "Band Label",
+        "purpose": "Tracked caps on genre-ink bands only (11px); foot band nowrap at 0.08em."
+      },
+      "display-phone": {
+        "displayName": "Display (phone)",
+        "purpose": "Screen title at 30px below 760px."
+      },
+      "heading": {
+        "displayName": "Heading",
+        "purpose": "State titles and Settings section titles (24px)."
+      },
+      "subhead": {
+        "displayName": "Subhead",
+        "purpose": "Empty-panel title and picked-book title (22px)."
+      },
+      "group-title": {
+        "displayName": "Group Title",
+        "purpose": "Inbox group row title; Stats summary sentence at 700 (20px)."
+      },
+      "panel-title": {
+        "displayName": "Panel Title",
+        "purpose": "Confirm panel heading (18px)."
+      },
+      "body-lg": {
+        "displayName": "Body Large",
+        "purpose": "Nav labels, author lines, primary button (17px)."
+      },
+      "body-sm": {
+        "displayName": "Body Small",
+        "purpose": "Tabs, segmented options, genre picks, reviews, notes (15px)."
+      },
+      "caption": {
+        "displayName": "Caption",
+        "purpose": "Meta lines, subtitles, readouts (14px)."
+      },
+      "caption-sm": {
+        "displayName": "Caption Small",
+        "purpose": "Counts, hints, chips, jacket captions, Inbox lookup line, Stats axis labels and segment counts (13px)."
+      },
+      "label-lg": {
+        "displayName": "Section Bar Label",
+        "purpose": "Panel section-header bar (12px), tracked caps on genre ink."
+      }
+    },
+    "shadows": [
+      {
+        "name": "jacket-rest",
+        "value": "0 1px 2px rgb(var(--shadow) / 0.28), 0 8px 16px rgb(var(--shadow) / 0.16)",
+        "purpose": "Jacket resting on the wall."
+      },
+      {
+        "name": "jacket-lifted",
+        "value": "0 2px 3px rgb(var(--shadow) / 0.28), 0 14px 24px rgb(var(--shadow) / 0.2)",
+        "purpose": "Pointer hover, with 4px lift."
+      },
+      {
+        "name": "jacket-selected",
+        "value": "0 0 0 3px var(--bg), 0 0 0 6px var(--ink), 0 12px 22px rgb(var(--shadow) / 0.2)",
+        "purpose": "Double ink ring for selection."
+      },
+      {
+        "name": "sheet",
+        "value": "-12px 0 32px rgb(var(--shadow) / 0.28)",
+        "purpose": "Work panel as a sheet below 1100px."
+      },
+      {
+        "name": "results-list",
+        "value": "0 12px 28px rgb(var(--shadow) / 0.22)",
+        "purpose": "Open combobox results list."
+      },
+      {
+        "name": "toast",
+        "value": "0 12px 28px rgb(var(--shadow) / 0.3)",
+        "purpose": "Fixed update/offline notice."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Jacket lift (260ms), panel entrance (320ms), sheet slide (320ms). Disabled under reduced-motion."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sheet",
+        "value": "1099px"
+      },
+      {
+        "name": "phone",
+        "value": "759px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Banded Jacket",
+      "kind": "custom",
+      "refersTo": "jacket",
+      "description": "Signature 2:3 paperback jacket with genre-ink bands; a cover image replaces the middle when known. Sizes: wall, panel 108, preview 200, mini 72.",
+      "html": "<div class=\"ds-jacket\"><span class=\"ds-band ds-band-top\">Author Name</span><span class=\"ds-jacket-title\">A Long Title</span><span class=\"ds-band ds-band-foot\">Sci-fi</span></div>",
+      "css": ".ds-jacket { --ink-genre:#1f3e8c; width:124px; aspect-ratio:2/3; display:grid; grid-template-rows:22% 1fr 14%; overflow:hidden; text-align:center; background:var(--card,#fbf6e7); color:#2b2218; font-family:'Jost Variable',system-ui,sans-serif; box-shadow:0 1px 2px rgba(40,25,5,.28),0 8px 16px rgba(40,25,5,.16); transition:transform 260ms cubic-bezier(.16,1,.3,1),box-shadow 260ms cubic-bezier(.16,1,.3,1); } .ds-jacket:hover { transform:translateY(-4px); box-shadow:0 2px 3px rgba(40,25,5,.28),0 14px 24px rgba(40,25,5,.2); } .ds-band { display:grid; place-items:center; background:var(--ink-genre); color:#fff; font-size:11px; font-weight:600; letter-spacing:.12em; text-transform:uppercase; padding:0 8px; } .ds-jacket-title { display:grid; align-content:center; padding:8px 10px; font-size:17px; font-weight:800; line-height:1.1; }"
+    },
+    {
+      "name": "Add Button",
+      "kind": "button",
+      "refersTo": "button-add",
+      "description": "Filled ink button at the foot of the sidebar.",
+      "html": "<button class=\"ds-add\">Add</button>",
+      "css": ".ds-add { min-height:48px; padding:0 20px; border:0; border-radius:4px; background:var(--ink,#2b2218); color:var(--bg,#f2ead6); font-family:'Jost Variable',system-ui,sans-serif; font-size:16px; font-weight:700; cursor:pointer; } .ds-add:focus-visible { outline:3px solid var(--accent,#c9500f); outline-offset:3px; }"
+    },
+    {
+      "name": "Quiet Button",
+      "kind": "button",
+      "refersTo": "button-quiet",
+      "description": "Outlined secondary action.",
+      "html": "<button class=\"ds-quiet\">Clear filters</button>",
+      "css": ".ds-quiet { min-height:44px; padding:0 18px; border:1px solid var(--ink,#2b2218); border-radius:4px; background:none; color:var(--ink,#2b2218); font-family:'Jost Variable',system-ui,sans-serif; font-size:16px; font-weight:600; cursor:pointer; } .ds-quiet:focus-visible { outline:3px solid var(--accent,#c9500f); outline-offset:3px; }"
+    },
+    {
+      "name": "Shelf Tab",
+      "kind": "chip",
+      "refersTo": "shelf-tab",
+      "description": "Pill filter for a Shelf; selected fills with ink.",
+      "html": "<button class=\"ds-tab\">Read <span>42</span></button> <button class=\"ds-tab ds-tab-on\">All <span>120</span></button>",
+      "css": ".ds-tab { min-height:44px; padding:0 14px; border:1px solid var(--rule,#d2c4a1); border-radius:99px; background:none; color:var(--ink,#2b2218); font-family:'Jost Variable',system-ui,sans-serif; font-size:15px; font-weight:500; cursor:pointer; } .ds-tab span { margin-left:4px; font-size:13px; color:var(--mute,#6b5d48); } .ds-tab-on { background:var(--ink,#2b2218); color:var(--bg,#f2ead6); border-color:var(--ink,#2b2218); } .ds-tab-on span { color:inherit; opacity:.75; } .ds-tab:focus-visible { outline:3px solid var(--accent,#c9500f); outline-offset:3px; }"
+    },
+    {
+      "name": "Search Field",
+      "kind": "input",
+      "refersTo": "search-field",
+      "description": "Cream field with tan hairline; whole field takes the focus ring.",
+      "html": "<label class=\"ds-search\"><input placeholder=\"Search titles, authors\"></label>",
+      "css": ".ds-search { display:flex; align-items:center; min-height:46px; padding:0 14px; border:1px solid var(--rule,#d2c4a1); border-radius:6px; background:var(--card,#fbf6e7); font-family:'Jost Variable',system-ui,sans-serif; } .ds-search input { flex:1; border:0; background:none; outline:none; font:inherit; font-size:16px; color:#2b2218; } .ds-search:focus-within { outline:3px solid var(--accent,#c9500f); outline-offset:2px; }"
+    },
+    {
+      "name": "Nav Item",
+      "kind": "nav",
+      "refersTo": "nav-item",
+      "description": "Sidebar row; current page is bold on papyrus with an orange icon.",
+      "html": "<button class=\"ds-nav\">Inbox</button><button class=\"ds-nav ds-nav-on\">Library</button>",
+      "css": ".ds-nav { width:184px; display:flex; align-items:center; min-height:48px; padding:0 20px; border:0; background:var(--side,#e7dbbb); color:var(--ink,#2b2218); font-family:'Jost Variable',system-ui,sans-serif; font-size:17px; font-weight:500; text-align:left; cursor:pointer; } .ds-nav-on { font-weight:700; background:var(--bg,#f2ead6); } .ds-nav:focus-visible { outline:3px solid var(--accent,#c9500f); outline-offset:-3px; }"
+    },
+    {
+      "name": "Genre Chip",
+      "kind": "chip",
+      "refersTo": "genre-chip",
+      "description": "Static pill in the Genre ink, beside an outlined tag chip.",
+      "html": "<span class=\"ds-chip\">Sci-fi</span> <span class=\"ds-chip ds-chip-tag\">reread</span>",
+      "css": ".ds-chip { display:inline-block; padding:4px 12px; border-radius:99px; background:#1f3e8c; color:#fff; font-family:'Jost Variable',system-ui,sans-serif; font-size:13px; font-weight:600; } .ds-chip-tag { background:none; color:#2b2218; border:1px solid var(--rule,#d2c4a1); font-weight:500; }"
+    },
+    {
+      "name": "Ledger Row",
+      "kind": "card",
+      "refersTo": "ledger-row",
+      "description": "Reading or Loan row under a genre-ink section bar.",
+      "html": "<div class=\"ds-ledger\"><div class=\"ds-ledger-head\"><span>Readings</span><span>2</span></div><div class=\"ds-ledger-row\"><b>Finished</b><small>Mar 2024 · Paperback</small></div></div>",
+      "css": ".ds-ledger { width:320px; font-family:'Jost Variable',system-ui,sans-serif; } .ds-ledger-head { display:flex; justify-content:space-between; padding:8px 12px; background:#1f3e8c; color:#fff; font-size:12px; font-weight:600; letter-spacing:.14em; text-transform:uppercase; } .ds-ledger-row { display:grid; padding:12px 14px; background:var(--card,#fbf6e7); color:#2b2218; border-bottom:1px solid var(--rule,#d2c4a1); } .ds-ledger-row b { font-size:16px; font-weight:700; } .ds-ledger-row small { font-size:14px; color:#6b5d48; }"
+    },
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one orange action of a view.",
+      "html": "<button class=\"ds-primary\">Save book</button> <button class=\"ds-primary\" disabled>Save book</button>",
+      "css": ".ds-primary { min-height:52px; padding:0 28px; border:0; border-radius:4px; background:var(--accent,#c9500f); color:var(--onaccent,#fff); font-family:'Jost Variable',system-ui,sans-serif;font-size:17px; font-weight:700; cursor:pointer; } .ds-primary:disabled { background:var(--rule,#d2c4a1); color:var(--mute,#6b5d48); cursor:not-allowed; } .ds-primary:focus-visible { outline:3px solid var(--accent,#c9500f); outline-offset:3px; }"
+    },
+    {
+      "name": "Segmented Control",
+      "kind": "chip",
+      "refersTo": "segmented-option",
+      "description": "Pill radio group; checked option fills with ink.",
+      "html": "<div class=\"ds-seg\"><button aria-checked=\"false\">Paperback</button><button aria-checked=\"true\">Ebook</button><button aria-checked=\"false\">Audio</button></div>",
+      "css": ".ds-seg { display:flex; flex-wrap:wrap; gap:8px; } .ds-seg button { min-height:44px; padding:0 16px; border:1px solid var(--rule,#d2c4a1); border-radius:99px; background:none; color:var(--ink,#2b2218); font-family:'Jost Variable',system-ui,sans-serif;font-size:15px; font-weight:500; cursor:pointer; } .ds-seg button[aria-checked='true'] { background:var(--ink,#2b2218); color:var(--bg,#f2ead6); border-color:var(--ink,#2b2218); font-weight:600; } .ds-seg button:focus-visible { outline:3px solid var(--accent,#c9500f); outline-offset:3px; }"
+    },
+    {
+      "name": "Combobox Results",
+      "kind": "input",
+      "refersTo": "combo-results",
+      "description": "Title search with a cream results list; active result inverts to ink.",
+      "html": "<div class=\"ds-combo\"><input class=\"ds-cin\" value=\"the hob\"><ul class=\"ds-results\"><li class=\"ds-result ds-on\"><span class=\"ds-src\">Library</span><b>The Hobbit</b><span class=\"ds-sub\">J. R. R. Tolkien</span></li><li class=\"ds-result\"><span class=\"ds-src\">Open Library</span><b>The Hobbit, Illustrated</b><span class=\"ds-sub\">1997</span></li></ul></div>",
+      "css": ".ds-combo { position:relative; width:360px; padding-bottom:150px; font-family:'Jost Variable',system-ui,sans-serif;} .ds-cin { width:100%; min-height:52px; padding:0 14px; border:1px solid var(--rule,#d2c4a1); border-radius:6px; background:var(--card,#fbf6e7); color:#2b2218; font:inherit; font-size:16px; } .ds-cin:focus-visible { outline:3px solid var(--accent,#c9500f); outline-offset:2px; } .ds-results { position:absolute; left:0; right:0; top:58px; margin:0; padding:0; list-style:none; background:var(--card,#fbf6e7); color:#2b2218; border:1px solid var(--rule,#d2c4a1); border-radius:6px; box-shadow:0 12px 28px rgba(40,25,5,.22); } .ds-result { display:grid; grid-template-columns:1fr auto; gap:0 12px; align-items:center; min-height:52px; padding:10px 14px; border-bottom:1px solid var(--rule,#d2c4a1); } .ds-src { grid-column:1/-1; font-size:11px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:#6b5d48; } .ds-result b { font-size:16px; } .ds-sub { font-size:14px; color:#6b5d48; text-align:right; } .ds-on { background:var(--ink,#2b2218); color:var(--bg,#f2ead6); } .ds-on .ds-src, .ds-on .ds-sub { color:inherit; opacity:.8; }"
+    },
+    {
+      "name": "Half-star Input",
+      "kind": "input",
+      "refersTo": "star-slot",
+      "description": "Five 44px slots, each with left and right half buttons for 0.5 steps.",
+      "html": "<div class=\"ds-stars\"><span class=\"ds-slot\"><svg width=\"36\" height=\"36\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2 6.3 20.3l1.2-6.4L2.8 9.5l6.4-.8z\" class=\"ds-off\"/><path d=\"M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2 6.3 20.3l1.2-6.4L2.8 9.5l6.4-.8z\" class=\"ds-on\" style=\"clip-path:inset(0 50% 0 0)\"/></svg><button class=\"ds-half ds-l\" aria-label=\"0.5 stars\"></button><button class=\"ds-half ds-r\" aria-label=\"1 star\"></button></span><span class=\"ds-read\">0.5 of 5</span></div>",
+      "css": ".ds-stars { display:flex; align-items:center; gap:14px; font-family:'Jost Variable',system-ui,sans-serif;} .ds-slot { position:relative; width:44px; height:44px; display:grid; place-items:center; } .ds-off { fill:var(--star-fill,#ddd0ac); stroke:var(--star-off,#8a7a52); stroke-width:1.4; stroke-linejoin:round; } .ds-on { fill:var(--accent,#c9500f); } .ds-half { position:absolute; top:0; bottom:0; width:50%; border:0; background:none; cursor:pointer; } .ds-l { left:0; } .ds-r { right:0; } .ds-half:focus-visible { outline:3px solid var(--accent,#c9500f); outline-offset:-2px; } .ds-read { font-size:14px; color:var(--mute,#6b5d48); }"
+    },
+    {
+      "name": "Inbox Group Row",
+      "kind": "card",
+      "refersTo": "inbox-group-row",
+      "description": "Ledger-style ruled row: mini jacket, title, match, and an action row.",
+      "html": "<div class=\"ds-ib\"><div class=\"ds-mini\"></div><div class=\"ds-ibmain\"><b class=\"ds-ibt\">The Left Hand of Darkness</b><span class=\"ds-iba\">Ursula K. Le Guin</span><span class=\"ds-ibl\">3 loans, Mar 2023 to Jan 2024</span><div class=\"ds-ibact\"><button class=\"ds-ibp\">Add to library</button><button class=\"ds-ibq\">Dismiss</button></div></div></div>",
+      "css": ".ds-ib { display:flex; gap:16px; width:520px; padding:18px 0; border-bottom:1px solid var(--rule,#d2c4a1); font-family:'Jost Variable',system-ui,sans-serif;color:var(--ink,#2b2218); } .ds-mini { width:72px; height:108px; flex:none; background:linear-gradient(#1f3e8c 22%,var(--card,#fbf6e7) 22% 86%,#1f3e8c 86%); box-shadow:0 1px 2px rgba(40,25,5,.28),0 8px 16px rgba(40,25,5,.16); } .ds-ibmain { display:grid; gap:3px; justify-items:start; } .ds-ibt { font-size:20px; font-weight:800; line-height:1.15; } .ds-iba { font-size:16px; } .ds-ibl { font-size:14px; color:var(--mute,#6b5d48); } .ds-ibact { display:flex; gap:10px; margin-top:12px; } .ds-ibp { min-height:44px; padding:0 20px; border:0; border-radius:4px; background:var(--accent,#c9500f); color:var(--onaccent,#fff); font:inherit; font-size:16px; font-weight:700; cursor:pointer; } .ds-ibq { min-height:44px; padding:0 18px; border:1px solid var(--ink,#2b2218); border-radius:4px; background:none; color:var(--ink,#2b2218); font:inherit; font-weight:600; cursor:pointer; } .ds-ibp:focus-visible, .ds-ibq:focus-visible { outline:3px solid var(--accent,#c9500f); outline-offset:3px; }"
+    },
+    {
+      "name": "Confirm Panel",
+      "kind": "card",
+      "refersTo": "confirm-panel",
+      "description": "Cream panel with a 2px ink outline guarding a destructive step.",
+      "html": "<div class=\"ds-confirm\" role=\"alertdialog\"><p class=\"ds-ct\">Replace your library with this backup?</p><p>Your current books will be removed.</p><div class=\"ds-cact\"><button class=\"ds-danger\">Replace my library</button><button class=\"ds-cq\">Cancel</button></div></div>",
+      "css": ".ds-confirm { width:360px; display:grid; gap:8px; padding:16px; border:2px solid var(--ink,#2b2218); border-radius:6px; background:var(--card,#fbf6e7); color:#2b2218; font-family:'Jost Variable',system-ui,sans-serif;} .ds-confirm p { margin:0; } .ds-ct { font-size:18px; font-weight:800; } .ds-cact { display:flex; gap:16px; align-items:center; flex-wrap:wrap; } .ds-danger { min-height:48px; padding:0 22px; border:0; border-radius:4px; background:var(--error,#a3260f); color:#fff; font:inherit; font-size:16px; font-weight:700; cursor:pointer; } .ds-cq { min-height:44px; padding:0 18px; border:1px solid #2b2218; border-radius:4px; background:none; color:#2b2218; font:inherit; font-weight:600; cursor:pointer; } .ds-danger:focus-visible, .ds-cq:focus-visible { outline:3px solid var(--accent,#c9500f); outline-offset:3px; }"
+    },
+    {
+      "name": "Sticky Action Bar",
+      "kind": "custom",
+      "refersTo": "action-bar-sticky",
+      "description": "Save bar pinned under the Add form: papyrus fill, tan top rule.",
+      "html": "<div class=\"ds-bar\"><button class=\"ds-bp\">Save book</button><span class=\"ds-berr\">Add a title to save.</span></div>",
+      "css": ".ds-bar { display:flex; align-items:center; gap:16px; flex-wrap:wrap; padding:14px 0; background:var(--bg,#f2ead6); border-top:1px solid var(--rule,#d2c4a1); font-family:'Jost Variable',system-ui,sans-serif;} .ds-bp { min-height:52px; padding:0 28px; border:0; border-radius:4px; background:var(--accent,#c9500f); color:var(--onaccent,#fff); font:inherit; font-size:17px; font-weight:700; cursor:pointer; } .ds-bp:focus-visible { outline:3px solid var(--accent,#c9500f); outline-offset:3px; } .ds-berr { color:var(--error,#a3260f); font-weight:600; }"
+    },
+    {
+      "name": "Undo Bar",
+      "kind": "custom",
+      "refersTo": "undo-bar",
+      "description": "Summary bar after resolving a group: message left, quiet Undo right.",
+      "html": "<p class=\"ds-undo\" role=\"status\">Added The Left Hand of Darkness. <button class=\"ds-uq\">Undo</button></p>",
+      "css": ".ds-undo { display:flex; gap:14px; align-items:center; justify-content:space-between; max-width:62ch; margin:0; padding:12px 14px; background:var(--panel,#ece1c6); border-radius:6px; color:var(--ink,#2b2218); font-weight:500; font-family:'Jost Variable',system-ui,sans-serif;} .ds-uq { min-height:44px; padding:0 18px; border:1px solid var(--ink,#2b2218); border-radius:4px; background:none; color:var(--ink,#2b2218); font:inherit; font-weight:600; cursor:pointer; } .ds-uq:focus-visible { outline:3px solid var(--accent,#c9500f); outline-offset:3px; }"
+    },
+    {
+      "name": "Stats Spine Chart",
+      "kind": "custom",
+      "refersTo": "stats-spine",
+      "description": "Books-per-year spine stack (one flat genre block per book), selected year ring, and flat bars on a 4px-radius track with counts printed inside format segments.",
+      "html": "<div class=\"ds-st\"><h2>Books per year</h2><div class=\"ds-cols\"><div class=\"ds-col\"><span class=\"ds-n\">4</span><div class=\"ds-stack\"><i style=\"background:#1f3e8c\"></i><i style=\"background:#1f3e8c\"></i><i style=\"background:#2e7d4f\"></i><i style=\"background:#a3286b\"></i></div><span class=\"ds-l\">2023</span></div><div class=\"ds-col ds-on\"><span class=\"ds-n\">2</span><div class=\"ds-stack\"><i style=\"background:#0f6b78\"></i><i style=\"background:#8a5a00\"></i></div><span class=\"ds-l\">2024</span></div></div><div class=\"ds-row\"><span>Sci-fi</span><span class=\"ds-track\"><b style=\"width:70%;background:#1f3e8c\"></b></span><em>7</em></div><div class=\"ds-row\"><span>2024</span><span class=\"ds-track\"><b style=\"width:30%;background:#2b2218;color:#f2ead6\">2</b><b style=\"width:20%;background:#c9500f;color:#fff\">1</b></span><em>3</em></div></div>",
+      "css": ".ds-st { width:380px; padding:20px 0; border-top:2px solid var(--ink,#2b2218); color:var(--ink,#2b2218); font-family:'Jost Variable',system-ui,sans-serif; } .ds-st h2 { margin:0 0 14px; font-size:24px; font-weight:800; } .ds-cols { display:flex; align-items:flex-end; gap:10px; margin-bottom:16px; } .ds-col { display:grid; justify-items:center; gap:4px; min-width:44px; padding:4px 0; border-radius:4px; } .ds-col.ds-on { background:var(--panel,#ece1c6); box-shadow:0 0 0 2px var(--ink,#2b2218); } .ds-n { font-size:14px; font-weight:700; } .ds-l { font-size:13px; color:var(--mute,#6b5d48); } .ds-stack { display:flex; flex-direction:column-reverse; gap:2px; } .ds-stack i { display:block; width:28px; height:10px; } .ds-row { display:grid; grid-template-columns:64px 1fr 32px; gap:12px; align-items:center; margin-top:8px; font-size:15px; } .ds-row em { font-style:normal; font-weight:700; text-align:right; } .ds-track { display:flex; height:22px; background:var(--panel,#ece1c6); border-radius:4px; overflow:hidden; } .ds-track b { display:grid; place-items:center; height:100%; font-size:13px; font-weight:700; }"
+    },
+    {
+      "name": "Toast",
+      "kind": "custom",
+      "refersTo": "toast",
+      "description": "Fixed ink notice for update-ready and offline-ready.",
+      "html": "<p class=\"ds-toast\" role=\"status\">A new version is ready. <button class=\"ds-tl\">Reload</button></p>",
+      "css": ".ds-toast { display:inline-block; max-width:420px; margin:0; padding:14px 18px; background:var(--ink,#2b2218); color:var(--bg,#f2ead6); border-radius:6px; box-shadow:0 12px 28px rgba(40,25,5,.3); font-weight:500; font-family:'Jost Variable',system-ui,sans-serif; } .ds-tl { min-height:44px; padding:0 4px; border:0; background:none; color:inherit; font:inherit; text-decoration:underline; text-decoration-color:var(--accent,#c9500f); text-decoration-thickness:2px; text-underline-offset:4px; cursor:pointer; } .ds-tl:focus-visible { outline:3px solid var(--accent,#c9500f); outline-offset:3px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Banded Paperback",
+    "overview": "The library is a wall of paperback jackets on eggshell paper. Genre is colour, the covers lead, and the chrome (sidebar, panel, filters) sits quietly in tones of the same paper. The ground is warm papyrus rather than white or grey, and all ink is warm brown rather than black. One burnt orange is the only UI accent; every other saturated colour belongs to a Genre and appears on a jacket band.\n\nThe system is dense but calm: a three-column shell (sidebar, jacket wall, Work panel) with generous 20 to 30px gutters between objects and tight, flat control chrome. Type is a single geometric sans (Jost) at heavy weights for titles and small tracked capitals for band labels, which echo printed paperback spines. Depth comes from tonal paper layers and from the jackets casting soft shadows like objects on a table.\n\nStats extends it with one more idea: a chart is a stack of books. Each finished book is one flat genre-ink block (a spine), so a column's height is a literal count, and horizontal bars sit on a Panel Parchment track. Task screens (Add, Inbox, Settings, Stats) extend the same world: lists and forms are quiet ruled rows on the papyrus ground, and a jacket appears only where a book is being chosen or shaped (mini jacket beside an Inbox group, live preview beside the Add form). A warm dark theme (toggle) swaps the paper for brown-black and lifts the accent, but jackets stay cream so the wall still reads as objects.",
+    "keyCharacteristics": [
+      "Eggshell/papyrus light default; warm dark brown theme by toggle, never stark white, grey, or pure black.",
+      "Genre ink is a flat band colour on the jacket and its chips; white text on every genre ink.",
+      "One UI accent (burnt orange), used for keyboard focus, current-nav marks, filled stars, text selection, and the single primary action of a view.",
+      "Selection is a double ink ring on jackets and an ink fill on pills and options; the accent ring is reserved for keyboard focus.",
+      "Single family (Jost); hierarchy by weight (800 titles, 500 UI, 600 labels) and size.",
+      "Real covers fill the middle of a jacket when known; the bands stay.",
+      "Data is drawn in the same flat genre inks: square spine blocks, 4px-radius bar tracks, counts printed in or beside the mark, no gradients or shadows."
+    ],
+    "rules": [
+      {
+        "name": "The Genre Is Colour Rule",
+        "body": "Saturated hue other than the orange accent appears only as a Genre ink on a band, chip, genre pick, section header, or Stats spine and genre bar. Chrome stays paper and ink.",
+        "section": "colors"
+      },
+      {
+        "name": "The Cream Stays Cream Rule",
+        "body": "Jackets and the surfaces that hold reading content stay cream in both themes; only the surrounding paper goes dark.",
+        "section": "colors"
+      },
+      {
+        "name": "The One Family Rule",
+        "body": "Jost only. Hierarchy comes from weight and size, never a second face.",
+        "section": "typography"
+      },
+      {
+        "name": "The Band Caps Rule",
+        "body": "Tracked uppercase is reserved for text sitting on a genre-ink band (jacket bands, panel section-header bar), where it mimics a printed spine.",
+        "section": "typography"
+      },
+      {
+        "name": "The Ink Ring Rule",
+        "body": "Selection is a double ring (paper gap, then ink). The 3px orange outline means keyboard focus and nothing else.",
+        "section": "elevation"
+      },
+      {
+        "name": "The One Primary Rule",
+        "body": "Orange fills exactly one button per view. Every other action is a quiet outlined button or an underlined link.",
+        "section": "colors"
+      },
+      {
+        "name": "The Error Is Rare Rule",
+        "body": "Rust is for a failed input or a step that destroys data, never for decoration or emphasis.",
+        "section": "colors"
+      },
+      {
+        "name": "The Ramp Is Closed Rule",
+        "body": "New type uses a size from the list above. A new surface picks the nearest step rather than adding a size.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat Bars Rule",
+        "body": "Sticky bars, summaries, and confirm panels separate by a tan hairline or tonal fill, never a shadow. Stats charts follow it: spines and fills are flat colour with no shadow or gradient, tracks are a Panel Parchment fill, and a selected year column takes a tonal fill plus a 2px ink ring.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do keep the ground eggshell/papyrus (#f2ead6) and ink warm brown (#2b2218); the dark theme uses brown-black (#241d16), never neutral grey or pure black.",
+      "Do carry Genre as a flat band ink on the jacket and matching chip, with white text.",
+      "Do use burnt orange only for focus, current marks, filled stars, selection highlight, the count badge, and the single primary action of a view.",
+      "Do mark selection with the double ink ring and a 4px lift on jackets, and with an ink fill on pills, options, and results.",
+      "Do confirm or offer Undo for every destructive or bulk step; the confirm names the outcome.",
+      "Do pick type from the closed ramp and keep touch targets at or above 44px; honour `prefers-reduced-motion`.",
+      "Do show unknown as unknown (\"Unrated\"), not as a zero state.",
+      "Do let a real cover replace the jacket middle while keeping both bands."
+    ],
+    "donts": [
+      "Don't put a second saturated colour in the chrome; hue belongs to Genre, with rust reserved for errors and destruction.",
+      "Don't use the orange ring for selection or the ink ring for focus.",
+      "Don't turn the wall into a table, a feed of white cards, or a wood-shelf skeuomorph, and don't turn Inbox or Settings into a card grid; they stay ruled rows.",
+      "Don't darken jackets in the dark theme.",
+      "Don't add a second type family or use tracked capitals off a genre-ink band.",
+      "Don't put a shadow on a bar, summary, or confirm panel."
+    ]
+  }
+}

@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Too Many Books – Banded Paperback sketch</title>
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f2ead6; --side:#e7dbbb; --panel:#ece1c6; --card:#fbf6e7;
+  --ink:#2b2218; --mute:#6b5d48; --rule:#d2c4a1; --cardink:#2b2218; --cardmute:#6b5d48;
+  --outer:#bfb193; --accent:#c9500f; --onaccent:#fff;
+  --or:#c9500f;--gr:#2e7d4f;--bl:#1f3e8c;--mg:#a3286b;
+}
+:root[data-theme=dark]{
+  --bg:#241d16; --side:#1a1510; --panel:#2d251c; --card:#f3ead4;
+  --ink:#f0e6cf; --mute:#b8a98c; --rule:#4a3f30; --cardink:#2b2218; --cardmute:#6b5d48;
+  --outer:#0f0c09; --accent:#e8792b; --onaccent:#1a1510;
+}
+*{box-sizing:border-box;margin:0}
+body{background:var(--outer);font-family:Jost,system-ui,sans-serif;color:var(--ink);display:grid;place-items:center;padding:16px;min-height:100vh}
+::selection{background:var(--accent);color:var(--onaccent)}
+.ipad{width:min(1180px,100%);aspect-ratio:1180/820;background:var(--bg);border-radius:22px;overflow:hidden;display:grid;grid-template-columns:190px 1fr 360px;box-shadow:0 20px 50px rgb(0 0 0/.3)}
+nav{background:var(--side);padding:24px 0;display:flex;flex-direction:column}
+.brand{padding:0 20px 24px;font-weight:800;font-size:21px;line-height:1;letter-spacing:.02em;text-transform:uppercase}
+.brand i{display:block;height:6px;background:var(--accent);margin-bottom:8px;width:40px}
+nav a{padding:11px 20px;font-size:16px;font-weight:500;color:var(--ink);text-decoration:none;display:flex;justify-content:space-between}
+nav a.on{font-weight:700;box-shadow:inset 4px 0 0 var(--accent)}
+.badge{background:var(--accent);color:var(--onaccent);font-size:12px;font-weight:700;padding:1px 8px;border-radius:99px}
+.add{margin:auto 20px 0;background:var(--ink);color:var(--bg);border:0;border-radius:4px;padding:13px;font:700 15px Jost}
+main{padding:24px 26px;min-width:0;overflow:hidden}
+.hd{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+h1{font-size:34px;font-weight:800;letter-spacing:-.01em}
+.hd span{font-size:12px;color:var(--mute)}
+.chips{display:flex;gap:8px;margin:12px 0 20px;font-size:13px;font-weight:600}
+.chips b{padding:6px 12px;border:1px solid var(--rule);border-radius:99px;font-weight:500}
+.chips b.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:22px 18px}
+.bk{aspect-ratio:2/3;background:var(--card);color:var(--cardink);display:grid;grid-template-rows:22% 1fr 14%;box-shadow:0 1px 2px rgb(40 25 5/.25),0 6px 14px rgb(40 25 5/.16);text-align:center;overflow:hidden}
+.bk .t1,.bk .t3{display:grid;place-items:center;color:#fff;font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:600}
+.bk .m{display:grid;place-items:center;padding:6px 8px;font-size:15px;line-height:1.15;font-weight:800}
+.bk .m small{display:block;font-size:11px;font-weight:500;color:var(--cardmute);margin-top:5px}
+.bk.sel{outline:3px solid var(--accent);outline-offset:3px}
+.cap{font-size:12px;color:var(--mute);margin-top:8px;font-variant-numeric:tabular-nums}
+aside{border-left:1px solid var(--rule);padding:24px;display:flex;flex-direction:column;gap:16px;background:var(--panel)}
+.wk{display:flex;gap:16px}
+.wk .bk{width:110px;flex:none}
+.wk h2{font-size:26px;line-height:1.05;font-weight:800}
+.wk p{color:var(--mute);font-size:14px;margin-top:6px}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;font-size:12px;font-weight:600}
+.tags b{border:1px solid var(--rule);padding:3px 9px;border-radius:99px;font-weight:500}
+.band{background:var(--bl);color:#fff;padding:7px 12px;font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase}
+.rd{background:var(--card);color:var(--cardink);padding:11px 12px;border-bottom:1px solid var(--rule);display:flex;justify-content:space-between;font-size:15px;font-weight:600}
+.rd small{display:block;color:var(--cardmute);font-weight:400;font-size:12px;margin-top:2px}
+.st{color:var(--or);letter-spacing:.06em}
+.note{margin-top:auto;font-size:12px;color:var(--mute)}
+.tg{position:fixed;top:14px;right:14px;background:var(--ink);color:var(--bg);border:0;border-radius:99px;padding:9px 16px;font:600 13px Jost;cursor:pointer}
+</style></head><body>
+<div class="ipad">
+<nav><div class="brand"><i></i>Too Many<br>Books</div>
+<a class="on" href="#">Library <span>412</span></a><a href="#">Inbox <span class="badge">37</span></a><a href="#">Stats</a><a href="#">Settings</a>
+<button class="add">+ Add a book</button></nav>
+<main>
+<div class="hd"><h1>Library</h1><span>Sample data, not real</span></div>
+<div class="chips"><b class="on">All</b><b>Read</b><b>Reading</b><b>Want to read</b><b>Series</b><b>Genre ▾</b></div>
+<div class="grid">
+<div><div class="bk sel"><div class="t1" style="background:var(--bl)">Andy Weir</div><div class="m">Project Hail Mary</div><div class="t3" style="background:var(--bl)"></div></div><div class="cap">Sci-fi · 12 Sep 2026</div></div>
+<div><div class="bk"><div class="t1" style="background:var(--gr)">Susanna Clarke</div><div class="m">Piranesi</div><div class="t3" style="background:var(--gr)"></div></div><div class="cap">Fantasy · Aug 2026</div></div>
+<div><div class="bk"><div class="t1" style="background:var(--mg)">Hilary Mantel</div><div class="m">Wolf Hall</div><div class="t3" style="background:var(--mg)"></div></div><div class="cap">Historical · Jul 2026</div></div>
+<div><div class="bk"><div class="t1" style="background:var(--bl)">James S. A. Corey</div><div class="m">Leviathan Wakes<small>Expanse 1</small></div><div class="t3" style="background:var(--bl)"></div></div><div class="cap">Sci-fi · 2025</div></div>
+<div><div class="bk"><div class="t1" style="background:var(--bl)">Ursula K. Le Guin</div><div class="m">The Left Hand of Darkness</div><div class="t3" style="background:var(--bl)"></div></div><div class="cap">Sci-fi · date unknown</div></div>
+<div><div class="bk"><div class="t1" style="background:var(--gr)">Madeline Miller</div><div class="m">Circe</div><div class="t3" style="background:var(--gr)"></div></div><div class="cap">Fantasy · Mar 2026</div></div>
+<div><div class="bk"><div class="t1" style="background:var(--bl)">William Gibson</div><div class="m">Neuromancer</div><div class="t3" style="background:var(--bl)"></div></div><div class="cap">DNF · Feb 2026</div></div>
+<div><div class="bk"><div class="t1" style="background:var(--gr)">Katherine Addison</div><div class="m">The Goblin Emperor</div><div class="t3" style="background:var(--gr)"></div></div><div class="cap">Fantasy · Jan 2026</div></div>
+<div><div class="bk"><div class="t1" style="background:var(--mg)">Maggie O'Farrell</div><div class="m">Hamnet</div><div class="t3" style="background:var(--mg)"></div></div><div class="cap">Historical · Dec 2025</div></div>
+<div><div class="bk"><div class="t1" style="background:var(--gr)">Scott Lynch</div><div class="m">The Lies of Locke Lamora</div><div class="t3" style="background:var(--gr)"></div></div><div class="cap">Fantasy · Nov 2025</div></div>
+</div></main>
+<aside>
+<div class="wk"><div class="bk"><div class="t1" style="background:var(--bl)"></div><div class="m" style="font-size:14px">Project Hail Mary</div><div class="t3" style="background:var(--bl)"></div></div>
+<div><h2>Project Hail Mary</h2><p>Andy Weir · 476 pp</p><div class="tags"><b>Sci-fi</b><b>first contact</b><b>science-y</b></div></div></div>
+<div><div class="band">Readings</div>
+<div class="rd"><div>Audiobook · Finished<small>12 Sep 2026 · started 3 Aug</small></div><span class="st">★★★★★</span></div>
+<div class="rd"><div>Ebook · Finished<small>2022 · year only</small></div><span class="st">★★★★½</span></div></div>
+<div><div class="band">Loans</div><div class="rd"><div>Libby · Borrowed<small>Aug 2026 · linked to the 2026 reading</small></div></div></div>
+<p class="note">Genre sets the band colour. White stays quiet so covers lead. Covers are placeholders.</p>
+</aside></div><button class="tg" onclick="var r=document.documentElement;r.dataset.theme=r.dataset.theme==='dark'?'':'dark';this.textContent=r.dataset.theme==='dark'?'Show light':'Show dark'">Show dark</button></body></html>

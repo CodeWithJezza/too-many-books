@@ -1,0 +1,14 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "design-system-font",
+        "value": "archivo",
+        "createdAt": "2026-09-30T06:44:51.346Z",
+        "reason": "Same: discarded Fahrplan sketch only"
+      }
+    ]
+  }
+}

@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Too Many Books – Ticket Wallet sketch</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#12275b;--red:#c7202b;--paper:#f8f8f5;--carbon:#5a3e9b;--rule:#c9cdd8;--mute:#56607a}
+*{box-sizing:border-box;margin:0}
+body{background:#0d1a3d;font-family:Barlow,system-ui,sans-serif;color:var(--navy);display:grid;place-items:center;padding:16px;min-height:100vh}
+::selection{background:var(--red);color:#fff}
+.ipad{width:min(1180px,100%);aspect-ratio:1180/820;background:var(--paper);border-radius:22px;overflow:hidden;display:grid;grid-template-columns:190px 1fr}
+nav{background:var(--navy);color:#fff;padding:24px 0;display:flex;flex-direction:column}
+.brand{padding:0 20px 24px;font:700 26px/0.95 'Barlow Condensed';text-transform:uppercase;letter-spacing:.04em}
+nav a{padding:12px 20px;font-size:16px;font-weight:500;color:#fff;text-decoration:none;display:flex;justify-content:space-between;border-top:1px solid #ffffff26}
+nav a.on{background:var(--paper);color:var(--navy);font-weight:600}
+.badge{background:var(--red);color:#fff;font-size:12px;font-weight:600;padding:1px 8px;border-radius:99px}
+.add{margin:auto 20px 0;background:var(--red);color:#fff;border:0;border-radius:3px;padding:13px;font:600 15px Barlow}
+main{padding:24px 28px;overflow:hidden}
+.hd{display:flex;justify-content:space-between;align-items:baseline;border-bottom:3px solid var(--navy);padding-bottom:10px}
+h1{font:700 42px/1 'Barlow Condensed';text-transform:uppercase;letter-spacing:.02em}
+.hd span{font-size:13px;color:var(--mute)}
+.bar{display:flex;gap:10px;align-items:center;margin:14px 0;font-size:14px}
+.bar b{background:var(--navy);color:#fff;padding:7px 14px;font-weight:600;border-radius:3px}
+.bar i{font-style:normal;color:var(--mute);margin-left:auto}
+.wkr{background:#fff;border:1px solid var(--rule);margin-bottom:14px;box-shadow:0 2px 6px rgb(18 39 91/.08)}
+.wkr>header{display:flex;gap:14px;align-items:center;padding:10px 14px;border-bottom:1px dashed var(--rule)}
+.cv{width:32px;height:46px;background:var(--navy);flex:none}
+.wkr h2{font:600 22px/1 'Barlow Condensed';letter-spacing:.02em;text-transform:uppercase}
+.wkr header p{font-size:13px;color:var(--mute);margin-top:3px}
+.ok{margin-left:auto;font:600 14px Barlow;padding:8px 14px;border:2px solid var(--navy);border-radius:3px;background:none;color:var(--navy)}
+.ok.p{background:var(--navy);color:#fff}
+.cp{display:grid;grid-template-columns:110px 1fr 150px 160px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--rule);font-size:15px;position:relative}
+.cp:last-child{border-bottom:0}
+.cp .d{font:600 20px 'Barlow Condensed';color:var(--carbon);letter-spacing:.03em;font-variant-numeric:tabular-nums}
+.cp small{display:block;font-size:12px;color:var(--mute)}
+.act{display:flex;gap:8px;justify-content:flex-end;font-size:13px;font-weight:600}
+.act b{padding:6px 10px;border:1px solid var(--rule);border-radius:3px;font-weight:500}
+.void{opacity:.55}
+.void .stamp{position:absolute;right:170px;top:50%;transform:translateY(-50%) rotate(-8deg);border:3px solid var(--red);color:var(--red);font:700 22px 'Barlow Condensed';letter-spacing:.14em;padding:0 10px}
+.note{font-size:12px;color:var(--mute);margin-top:6px}
+</style></head><body>
+<div class="ipad">
+<nav><div class="brand">Too<br>Many<br>Books</div>
+<a href="#">Library <span>412</span></a><a class="on" href="#">Inbox <span class="badge">37</span></a><a href="#">Stats</a><a href="#">Settings</a>
+<button class="add">+ Add a book</button></nav>
+<main>
+<div class="hd"><h1>Inbox</h1><span>Sample data, not real</span></div>
+<div class="bar"><b>Accept all clean matches (24)</b><span>Libby · imported 29 Sep 2026</span><i>37 records to review</i></div>
+<section class="wkr"><header><div class="cv"></div><div><h2>Project Hail Mary</h2><p>Andy Weir · matches an existing Work</p></div><button class="ok p">Finished</button><button class="ok">Want to read</button><button class="ok">Dismiss</button></header>
+<div class="cp"><span class="d">AUG 2026</span><span>Borrowed<small>Libby · Audiobook · King County</small></span><span>Finish: Aug 2026</span><div class="act"></div></div></section>
+<section class="wkr"><header><div class="cv"></div><div><h2>Piranesi</h2><p>Susanna Clarke · possible match: “Piranesi (Audio)”</p></div><button class="ok p">Same book</button><button class="ok">New Work</button></header>
+<div class="cp"><span class="d">JUL 2026</span><span>Borrowed<small>Libby · Ebook</small></span><span>Finish: Jul 2026</span><div class="act"></div></div>
+<div class="cp"><span class="d">MAR 2026</span><span>Borrowed<small>Libby · Ebook · renewed</small></span><span>Same Reading</span><div class="act"></div></div></section>
+<section class="wkr void"><header><div class="cv"></div><div><h2>Atomic Habits</h2><p>James Clear · dismissed, can be undone</p></div><button class="ok">Undo</button></header>
+<div class="cp"><span class="d">JAN 2026</span><span>Borrowed<small>Libby · Audiobook</small></span><span></span><div class="act"></div><span class="stamp">VOID</span></div></section>
+<p class="note">Dismissed Loans are stamped, not deleted. Carbon purple for filled figures. Covers are placeholders.</p>
+</main></div></body></html>

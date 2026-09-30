@@ -1,0 +1,106 @@
+{
+  "title": "Choose the visual world for Too Many Books",
+  "question": "The roll assigned Fahrplan. Keep it, take an alternate, or re-roll.",
+  "options": [
+    {
+      "id": "assigned",
+      "label": "Fahrplan",
+      "kicker": "THE ROLL",
+      "lineage": "Swiss railway departure posters and printed timetables",
+      "thesis": "Your library as a timetable: every Work a row, every Reading a departure, every gap left honestly blank.",
+      "palette": ["#F4C400", "#16161A", "#E2231A", "#E9E9E4"],
+      "materials": ["ruled hairline columns", "tabular numerals", "signage yellow"],
+      "viewport": "iPad landscape: a ruled Library table on ink black, yellow column heads, a red badge on Inbox, and the selected Work's page as a side panel.",
+      "risk": "Could read cold or utilitarian if type and spacing are not warm; needs real covers to carry the charm.",
+      "raised": [
+        {"from": "HyperCard shoebox", "raise": "Every row edits in place where it sits, so browsing and correcting are one gesture."},
+        {"from": "Nixie counter", "raise": "Stats counts sit in fixed decimal columns, so a year's total reads like a physical counter."}
+      ],
+      "case": "Dense, scannable, and honest about unknowns (blank cells, not guesses). Long Inbox sessions get a departures-board rhythm that makes a backlog feel finishable."
+    },
+    {
+      "id": "model-pick",
+      "label": "Banded Paperback",
+      "kicker": "IMPECCABLE'S PICK",
+      "lineage": "1935-60s three-band mass-market paperback covers",
+      "thesis": "Each Work is a small jacket: strict bands, one saturated colour per Genre, covers doing the talking.",
+      "palette": ["#E8641B", "#2E7D4F", "#1F3E8C", "#FFFFFF"],
+      "materials": ["flat ink", "clear white bands", "grid of covers"],
+      "viewport": "A wall of covers on a strict three-band grid, Genre colour on each spine edge, quiet white chrome around them.",
+      "risk": "Familiar to anyone who knows Penguin; lowest-risk of the bookish worlds and the one most runs land on."
+    },
+    {
+      "id": "challenger-sneaker",
+      "label": "Box Stack Archive",
+      "verdict": "competitive",
+      "lineage": "sneaker archive walls, cardboard boxes with end labels",
+      "thesis": "The library is a wall of boxes: end label on show, pull one out to open the Work.",
+      "palette": ["#C8531A", "#0C0C0C", "#F7F5F0", "#E3B15A"],
+      "materials": ["burnt orange board", "one-line silhouette art", "tissue white"],
+      "viewport": "A stacked wall of end-labels: title in condensed caps, author and format as mono size-run.",
+      "case": "Literally 'too many books' as a stack, and Work pages open like lids; loses narrowly on clarity for dense filtering.",
+      "risk": "Charm can slow a 500-Work library on a filter-heavy task.",
+      "hero": "https://impeccable.style/worlds/cards/textiles-weave-drape-fashion-sneaker-box-stacks-hero.webp"
+    },
+    {
+      "id": "challenger-orienteering",
+      "label": "Orienteering Map",
+      "verdict": "competitive",
+      "lineage": "ISOM orienteering maps and control descriptions",
+      "thesis": "Reading history as terrain with your route drawn in purple across it.",
+      "palette": ["#7E2C8F", "#F4E85A", "#9BC76B", "#8A5A2B"],
+      "materials": ["contour texture", "legend tables", "control circles"],
+      "viewport": "White forest ground, contour lines, purple numbered controls; Inbox items are controls you punch off.",
+      "case": "Punching controls is a lovely Inbox ritual and Stats fit terrain; loses on Library clarity because books are not places.",
+      "risk": "Metaphor stretches thin on Add and Settings.",
+      "hero": "https://impeccable.style/worlds/cards/notation-diagram-systems-orienteering-map-hero.webp"
+    },
+    {
+      "id": "challenger-ticket",
+      "label": "Jet-Age Ticket Wallet",
+      "verdict": "competitive",
+      "lineage": "airline ticket wallets, carbon coupons, VOID stamps",
+      "thesis": "Loans are coupons; dismissed ones are stamped VOID, never deleted.",
+      "palette": ["#12275B", "#C7202B", "#F8F8F5", "#5A3E9B"],
+      "materials": ["coupon stock", "carbon purple", "red stamps"],
+      "viewport": "Tabbed coupon heads, hairline fare boxes, carbon-purple numerals, a red VOID stamp on dismissed rows.",
+      "case": "Maps almost one-to-one to Inbox and Import records; loses narrowly on identification because it is about travel.",
+      "risk": "Library and Stats have to stretch the coupon idea.",
+      "hero": "https://impeccable.style/worlds/cards/vernacular-ephemera-jet-age-ticket-wallet-hero.webp"
+    },
+    {
+      "id": "challenger-hypercard",
+      "label": "HyperCard Stack",
+      "verdict": "declined",
+      "lineage": "1987 HyperCard stacks",
+      "palette": ["#000000", "#FFFFFF"],
+      "materials": ["one-bit dither", "pixel menus"],
+      "case": "Loses both: retro novelty, and cover art has nowhere to live in one-bit.",
+      "kept": "In-place editing of anything on screen.",
+      "hero": "https://impeccable.style/worlds/cards/medium-native-hypercard-stack-shoebox-hero.webp"
+    },
+    {
+      "id": "challenger-nixie",
+      "label": "Nixie Counter",
+      "verdict": "declined",
+      "lineage": "nixie-tube laboratory counters",
+      "palette": ["#FF7A1A", "#0B0B0B"],
+      "materials": ["glass tubes", "steel chassis"],
+      "case": "Loses both: glowing dark chrome around a book app, and only Stats benefits.",
+      "kept": "Fixed decimal positions for counts.",
+      "hero": "https://impeccable.style/worlds/cards/signals-instruments-nixie-laboratory-counter-hero.webp"
+    }
+  ],
+  "reroll": {"registers": ["safer", "bolder"]},
+  "canon": true,
+  "canonCard": {
+    "label": "The category standard",
+    "thesis": "A clean cover-grid library app with a tab bar and rounded cards, executed impeccably.",
+    "palette": ["#FFFFFF", "#1C1C1E", "#0A84FF"],
+    "materials": ["cover grid", "system UI"],
+    "viewport": "Sidebar, a grid of covers, star ratings and shelves in native iPad idiom.",
+    "risk": "Indistinguishable from other trackers by design."
+  },
+  "steer": true,
+  "buildPath": {"value": "code"}
+}

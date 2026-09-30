@@ -1,0 +1,3 @@
+# Import Libby JSON only, borrows only, identified by library + title ID + borrow time
+
+The importer accepts Libby's JSON timeline export and reads only `Borrowed` rows; all other activity is ignored. A Loan is identified by library key, Libby `titleId`, and the millisecond borrow timestamp, which was unique for all 305 rows in a real export and never changes between exports. ISBN, format, and title text are stored but never used for identity, because ISBN is missing on some rows and title text is unstable. Libby's CSV is not supported: it drops the title ID and library key, and its timestamp is a timezone-less local-time string, so the same borrow cannot be matched reliably across exports.
