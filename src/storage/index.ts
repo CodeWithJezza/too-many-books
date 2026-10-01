@@ -8,7 +8,7 @@ import { getLookupMode } from '../settings'
 import { openLibrary } from '../metadata/openLibrary'
 import type { MetadataHit } from '../metadata/types'
 import { parseLibbyExport } from '../import/libby'
-import type { DatePart, Format, GenreId, GoodreadsRecord, ImportRecord, Reading, ReadingStatus, RecordState, Work, WorkDetail, WorkSummary } from '../types'
+import type { DatePart, Format, GenreId, GoodreadsRecord, ImportRecord, Loan, Reading, ReadingStatus, RecordState, Work, WorkDetail, WorkSummary } from '../types'
 
 /**
  * The only module screens talk to for data. Dexie stays behind this seam so a
@@ -77,6 +77,21 @@ export function useWorkDetail(id: number | undefined): WorkDetail | undefined | 
   )
 }
 
+// ---------- Loans ----------
+
+function manualLoan(workId: number, readingId: number, format: Format, l: { library: string; borrowed?: DatePart }): Loan {
+  return { workId, readingId, source: 'manual', format, library: l.library.trim(), borrowed: l.borrowed }
+}
+
+/** Library names the reader has used or imported, most used first, to suggest while typing. */
+export function useLibraryNames(): string[] {
+  return useLiveQuery(async () => {
+    const n = new Map<string, number>()
+    for (const l of await db.loans.toArray()) if (l.library) n.set(l.library, (n.get(l.library) ?? 0) + 1)
+    return [...n].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).map(([name]) => name)
+  }, []) ?? []
+}
+
 // ---------- Add (ADR 0007) ----------
 
 export type AddStatus = ReadingStatus | 'want'
@@ -87,6 +102,8 @@ export interface AddInput {
   newWork?: Pick<Work, 'title' | 'author' | 'genres' | 'pageCount' | 'coverUrl' | 'externalIds'>
   status: AddStatus
   reading?: Pick<Reading, 'format' | 'start' | 'finish' | 'rating' | 'review'>
+  /** Records that this Reading was borrowed from a library. Ignored for Want to read. */
+  loan?: { library: string; borrowed?: DatePart }
 }
 
 /**
@@ -94,7 +111,7 @@ export interface AddInput {
  * are created together, so a bare empty Work can never exist.
  */
 export async function addEntry(input: AddInput, store: LibraryDB = db): Promise<number> {
-  return store.transaction('rw', store.works, store.readings, async () => {
+  return store.transaction('rw', store.works, store.readings, store.loans, async () => {
     let workId = input.workId
     if (workId === undefined) {
       if (!input.newWork?.title.trim()) throw new Error('A title is required')
@@ -111,7 +128,8 @@ export async function addEntry(input: AddInput, store: LibraryDB = db): Promise<
     }
     if (input.status !== 'want') {
       if (!input.reading) throw new Error('A reading needs a format')
-      await store.readings.add({ ...input.reading, workId, status: input.status })
+      const readingId = (await store.readings.add({ ...input.reading, workId, status: input.status })) as number
+      if (input.loan) await store.loans.add(manualLoan(workId, readingId, input.reading.format, input.loan))
       // A Reading means it is no longer just wanted.
       const w = await store.works.get(workId)
       if (w?.shelves.includes('want')) await store.works.update(workId, { shelves: w.shelves.filter((s) => s !== 'want') })
@@ -269,7 +287,7 @@ export async function resolveGroupWithReceipt(input: ResolveInput, store: Librar
 
     const loanIds: number[] = []
     for (const r of records) {
-      loanIds.push((await store.loans.add({ workId, source: 'libby', borrowed: monthOf(r.borrowedAt), library: r.libraryName, format: r.format, recordKey: r.key })) as number)
+      loanIds.push((await store.loans.add({ workId, readingId, source: 'libby', borrowed: monthOf(r.borrowedAt), library: r.libraryName, format: r.format, recordKey: r.key })) as number)
       await store.importRecords.update(r.id!, { state: 'accepted', workId })
     }
     return { workId, createdWork: input.workId === undefined, readingId, loanIds, recordIds: records.map((r) => r.id!), before, title: newest.title }
@@ -314,6 +332,8 @@ export interface ReadingEdit {
   finish?: DatePart
   rating?: number
   review?: string
+  /** The reader's own record that this Reading was borrowed. Absent removes it. Imported Loans are never touched. */
+  loan?: { id?: number; library: string; borrowed?: DatePart }
 }
 
 export interface WorkEdit {
@@ -328,12 +348,12 @@ export interface WorkEdit {
 
 /**
  * Saves a Work and all its Readings in one transaction: readings missing from the list are
- * removed, ones with an id are updated, ones without are added. Loans are never touched.
+ * removed, ones with an id are updated, ones without are added. Imported Loans are never touched; manual Loans follow their Reading.
  * These are the local edits that later imports must not overwrite (ADR 0003).
  */
 export async function saveWorkEdits(workId: number, edit: WorkEdit, readings: ReadingEdit[], store: LibraryDB = db): Promise<void> {
   if (!edit.title.trim()) throw new Error('A title is required')
-  await store.transaction('rw', store.works, store.readings, async () => {
+  await store.transaction('rw', store.works, store.readings, store.loans, async () => {
     const work = await store.works.get(workId)
     if (!work) throw new Error('That book no longer exists')
     const others = work.shelves.filter((s) => s !== 'want')
@@ -350,7 +370,14 @@ export async function saveWorkEdits(workId: number, edit: WorkEdit, readings: Re
     await store.works.put(next)
     const keep = new Set(readings.map((r) => r.id).filter((x): x is number => x !== undefined))
     const existing = await store.readings.where('workId').equals(workId).toArray()
-    await store.readings.bulkDelete(existing.filter((r) => !keep.has(r.id!)).map((r) => r.id!))
+    const gone = existing.filter((r) => !keep.has(r.id!)).map((r) => r.id!)
+    await store.readings.bulkDelete(gone)
+    // Borrows the reader recorded go with their Reading; imported ones stay as evidence, unlinked.
+    const mine = await store.loans.where('workId').equals(workId).toArray()
+    for (const l of mine.filter((l) => l.readingId !== undefined && gone.includes(l.readingId))) {
+      if (l.source === 'manual') await store.loans.delete(l.id!)
+      else await store.loans.update(l.id!, { readingId: undefined })
+    }
     for (const r of readings) {
       const row: Reading = {
         workId,
@@ -361,8 +388,13 @@ export async function saveWorkEdits(workId: number, edit: WorkEdit, readings: Re
         rating: r.rating,
         review: r.review?.trim() || undefined,
       }
-      if (r.id !== undefined) await store.readings.put({ ...row, id: r.id })
-      else await store.readings.add(row)
+      const readingId = r.id !== undefined ? (await store.readings.put({ ...row, id: r.id }), r.id) : ((await store.readings.add(row)) as number)
+      const own = mine.find((l) => l.source === 'manual' && l.readingId === readingId)
+      if (r.loan) {
+        const l = manualLoan(workId, readingId, r.format, r.loan)
+        if (own) await store.loans.put({ ...l, id: own.id })
+        else await store.loans.add(l)
+      } else if (own) await store.loans.delete(own.id!)
     }
   })
 }

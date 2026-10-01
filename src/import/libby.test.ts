@@ -82,6 +82,7 @@ describe('grouping and resolving', () => {
     expect(readings).toHaveLength(1)
     expect(readings[0].finish).toEqual({ y: new Date(1786000000000).getFullYear(), m: new Date(1786000000000).getMonth() + 1 })
     expect(await db.loans.where('workId').equals(workId).count()).toBe(2)
+    expect((await db.loans.toArray()).every((l) => l.readingId === readings[0].id)).toBe(true)
     expect((await db.works.get(workId))?.externalIds?.libby).toEqual(['1001'])
   })
 
@@ -102,6 +103,7 @@ describe('grouping and resolving', () => {
     await resolveGroup({ recordIds: [rec.id!], resolution: { kind: 'link' }, workId }, db)
     expect(await db.readings.count()).toBe(0)
     expect(await db.loans.count()).toBe(1)
+    expect((await db.loans.toArray())[0].readingId).toBeUndefined() // a borrow is not proof of a read
     expect((await db.importRecords.get(rec.id!))?.state).toBe('accepted')
   })
 

@@ -28,6 +28,7 @@ export class LibraryDB extends Dexie {
     this.version(2).stores({ metadata: 'query' })
     this.version(3).stores({ importRecords: '++id, &key, state, titleId', imports: '++id' })
     this.version(4).stores({ grRecords: '++id, &bookId, state' })
+    this.version(5).stores({ loans: '++id, workId, readingId' })
     for (const t of [this.works, this.readings, this.loans, this.importRecords, this.grRecords]) {
       t.hook('creating', () => void bumpChanges())
       t.hook('updating', () => void bumpChanges())

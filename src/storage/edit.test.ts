@@ -61,6 +61,35 @@ describe('saveWorkEdits', () => {
   })
 })
 
+describe('manual loans in the editor', () => {
+  const edit = (readingId: number, loan?: { id?: number; library: string; borrowed?: { y: number; m?: number } }) =>
+    [{ id: readingId, status: 'finished' as const, format: 'ebook' as const, finish: { y: 2026, m: 3 }, loan }]
+
+  it('adds, updates in place, and removes a manual loan with the Reading', async () => {
+    const { id, readingId } = await circe()
+    await saveWorkEdits(id, base, edit(readingId, { library: 'Central', borrowed: { y: 2026, m: 2 } }), db)
+    const [l] = await db.loans.toArray()
+    expect(l).toMatchObject({ source: 'manual', readingId, library: 'Central', borrowed: { y: 2026, m: 2 } })
+    await saveWorkEdits(id, base, edit(readingId, { id: l.id, library: 'East', borrowed: undefined }), db)
+    expect(await db.loans.count()).toBe(1)
+    expect(await db.loans.get(l.id!)).toMatchObject({ library: 'East', borrowed: undefined })
+    await saveWorkEdits(id, base, edit(readingId), db)
+    expect(await db.loans.count()).toBe(0)
+  })
+
+  it('never touches an imported loan, and unlinks it when its Reading is removed', async () => {
+    const { id, readingId } = await circe()
+    const libby = (await db.loans.add({ workId: id, readingId, source: 'libby', borrowed: { y: 2026, m: 2 }, library: 'x', recordKey: 'k' })) as number
+    await saveWorkEdits(id, base, edit(readingId, { library: 'Mine' }), db)
+    expect(await db.loans.get(libby)).toMatchObject({ source: 'libby', readingId, library: 'x' })
+    await saveWorkEdits(id, base, [], db)
+    const left = await db.loans.toArray()
+    expect(left).toHaveLength(1)
+    expect(left[0]).toMatchObject({ id: libby, source: 'libby' })
+    expect(left[0].readingId).toBeUndefined()
+  })
+})
+
 describe('deleteWork', () => {
   it('removes the Work, its Readings and Loans, and nothing else', async () => {
     const a = await circe()

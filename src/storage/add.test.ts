@@ -25,6 +25,17 @@ describe('addEntry', () => {
     expect(await db.works.count()).toBe(1)
     expect((await db.works.get(id))?.shelves).toEqual([])
   })
+  it('records a library borrow tied to the new Reading, with the date left blank', async () => {
+    const id = await addEntry({ newWork: { title: 'Piranesi', author: '', genres: [] }, status: 'finished', reading: { format: 'ebook', finish: { y: 2026, m: 3 } }, loan: { library: ' Sample County ' } }, db)
+    const [r] = await db.readings.where('workId').equals(id).toArray()
+    const [l] = await db.loans.toArray()
+    expect(l).toMatchObject({ workId: id, readingId: r.id, source: 'manual', format: 'ebook', library: 'Sample County' })
+    expect(l.borrowed).toBeUndefined()
+  })
+  it('makes no loan for Want to read', async () => {
+    await addEntry({ newWork: { title: 'Rebecca', author: '', genres: [] }, status: 'want', loan: { library: 'x' } }, db)
+    expect(await db.loans.count()).toBe(0)
+  })
   it('refuses a blank title and leaves nothing behind', async () => {
     await expect(addEntry({ newWork: { title: '  ', author: '', genres: [] }, status: 'want' }, db)).rejects.toThrow()
     expect(await db.works.count()).toBe(0)

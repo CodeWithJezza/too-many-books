@@ -17,7 +17,7 @@ An ordered group of Works. Each Work's position may be fractional (e.g. 2.5 for 
 _Avoid_: Saga, universe
 
 **Loan**:
-An Import record from Libby: a single borrow. A Loan is evidence of borrowing, not of reading: it may lead to a Reading, share a Reading with other Loans of the same Work, or lead to nothing.
+A single borrow from a library. Libby imports supply them in bulk (identified per ADR 0002); the reader can also record one by hand when adding or editing a Reading, with the library and borrow date both optional. A Loan is evidence of borrowing, not of reading: it may lead to a Reading (its `readingId`), share a Reading with other Loans of the same Work, or lead to nothing. Existing Loans are never linked to a Reading by guesswork. Imported Loans are never edited; manual ones follow their Reading.
 _Avoid_: Checkout, borrow
 
 **Import**:

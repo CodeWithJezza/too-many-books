@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { DateField, Segmented, dateOk } from '../components/FormControls'
 import { Icon } from '../components/Icon'
+import { LibraryLoanField, blankLoan, type LoanForm } from '../components/LibraryLoanField'
 import { Jacket } from '../components/Jacket'
 import { StarsInput } from '../components/StarsInput'
 import { fromDatePart, todayIso, toDatePart, withPrecision, type Precision } from '../lib/dates'
 import { GENRES } from '../lib/genres'
-import { deleteWork, saveWorkEdits, useWorkDetail, useWorksRaw, type ReadingEdit } from '../storage'
+import { deleteWork, saveWorkEdits, useLibraryNames, useWorkDetail, useWorksRaw, type ReadingEdit } from '../storage'
 import type { Format, GenreId, ReadingStatus, WorkSummary } from '../types'
 
 const STATUSES: { id: ReadingStatus; label: string }[] = [
@@ -29,10 +30,15 @@ interface ReadingForm {
   finish: DateState
   rating?: number
   review: string
+  loan: LoanForm
+  /** The reader's own Loan row for this Reading, kept so Save updates it in place. */
+  loanId?: number
+  /** Libby Loans already tied to this Reading; shown, never edited. */
+  importedLoans: number
 }
 
 let nextKey = 1
-const blank = (): ReadingForm => ({ key: nextKey++, status: 'finished', format: 'print', start: fromDatePart(), finish: { iso: todayIso(), precision: 'day' }, review: '' })
+const blank = (): ReadingForm => ({ key: nextKey++, status: 'finished', format: 'print', start: fromDatePart(), finish: { iso: todayIso(), precision: 'day' }, review: '', loan: blankLoan(), importedLoans: 0 })
 
 export function EditWork({ id, onClose, onDeleted, onDirty, leaveRequested, onLeaveAnswer }: {
   id: number
@@ -45,6 +51,7 @@ export function EditWork({ id, onClose, onDeleted, onDirty, leaveRequested, onLe
 }) {
   const detail = useWorkDetail(id)
   const allWorks = useWorksRaw()
+  const libraryNames = useLibraryNames()
   const [ready, setReady] = useState(false)
   const [title, setTitle] = useState('')
   const [author, setAuthor] = useState('')
@@ -72,10 +79,16 @@ export function EditWork({ id, onClose, onDeleted, onDirty, leaveRequested, onLe
     setSeriesPos(detail.series ? String(detail.series.position) : '')
     setPages(detail.pageCount ? String(detail.pageCount) : '')
     setWant(detail.shelves.includes('want'))
-    setReadings(detail.readings.map((r) => ({
-      key: nextKey++, id: r.id, status: r.status, format: r.format,
-      start: fromDatePart(r.start), finish: fromDatePart(r.finish), rating: r.rating, review: r.review ?? '',
-    })))
+    setReadings(detail.readings.map((r) => {
+      const mine = detail.loans.find((l) => l.source === 'manual' && l.readingId === r.id)
+      return {
+        key: nextKey++, id: r.id, status: r.status, format: r.format,
+        start: fromDatePart(r.start), finish: fromDatePart(r.finish), rating: r.rating, review: r.review ?? '',
+        loan: mine ? { on: true, library: mine.library, date: fromDatePart(mine.borrowed) } : blankLoan(),
+        loanId: mine?.id,
+        importedLoans: detail.loans.filter((l) => l.source === 'libby' && l.readingId === r.id).length,
+      }
+    }))
     setReady(true)
   }, [detail, ready])
 
@@ -106,7 +119,7 @@ export function EditWork({ id, onClose, onDeleted, onDirty, leaveRequested, onLe
   }
   const posOk = seriesPos === '' ? seriesName.trim() === '' : Number.isFinite(Number(seriesPos))
   const pagesOk = pages === '' || (Number.isInteger(Number(pages)) && Number(pages) > 0)
-  const datesBad = readings.some((r) => (r.status !== 'reading' && !dateOk(r.finish.iso, r.finish.precision)) || !dateOk(r.start.iso, r.start.precision))
+  const datesBad = readings.some((r) => (r.status !== 'reading' && !dateOk(r.finish.iso, r.finish.precision)) || !dateOk(r.start.iso, r.start.precision) || (r.loan.on && !dateOk(r.loan.date.iso, r.loan.date.precision)))
   const canSave = title.trim() !== '' && posOk && pagesOk && !datesBad && !saving
   const preview: WorkSummary = { id, title: title || 'Untitled', author, genres, tags: [], shelves: [], readingCount: 0, coverUrl: detail?.coverUrl, series: seriesName.trim() && seriesPos !== '' ? { name: seriesName.trim(), position: Number(seriesPos) } : undefined }
 
@@ -121,6 +134,7 @@ export function EditWork({ id, onClose, onDeleted, onDirty, leaveRequested, onLe
         start: toDatePart(r.start.iso, r.start.precision),
         finish: r.status === 'reading' ? undefined : toDatePart(r.finish.iso, r.finish.precision),
         rating: r.rating, review: r.review,
+        loan: r.loan.on ? { id: r.loanId, library: r.loan.library, borrowed: toDatePart(r.loan.date.iso, r.loan.date.precision) } : undefined,
       }))
       await saveWorkEdits(id, {
         title, author, genres, tags: tagText.trim() ? [...tags, tagText.trim()] : tags,
@@ -212,6 +226,7 @@ export function EditWork({ id, onClose, onDeleted, onDirty, leaveRequested, onLe
                 {r.status !== 'reading' && (
                   <DateField label={r.status === 'dnf' ? 'Stopped' : 'Finished'} iso={r.finish.iso} precision={r.finish.precision} onIso={(iso) => patch(r.key, { finish: { ...r.finish, iso } })} onPrecision={(p) => patch(r.key, { finish: withPrecision(r.finish, p) })} />
                 )}
+                <LibraryLoanField value={r.loan} onChange={(loan) => patch(r.key, { loan })} names={libraryNames} onDate={(p) => withPrecision(r.loan.date, p)} readOnlyNote={r.importedLoans > 0 ? `${r.importedLoans} imported Libby ${r.importedLoans === 1 ? 'loan is' : 'loans are'} also tied to this reading. They are kept as they are.` : undefined} />
                 <div className="field">
                   <span className="label">Rating</span>
                   <StarsInput value={r.rating} onChange={(rating) => patch(r.key, { rating })} />

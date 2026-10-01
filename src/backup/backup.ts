@@ -69,6 +69,10 @@ export function validateBackup(json: unknown): { file: BackupFile; summary: Back
   for (const r of [...tables.readings, ...tables.loans]) {
     if (!workIds.has(r.workId)) throw new BackupFormatError('The backup is damaged: a reading or loan points to a book that is not in the file.')
   }
+  const readingIds = new Set(tables.readings.map((r) => r.id))
+  for (const l of tables.loans) {
+    if (l.readingId !== undefined && !readingIds.has(l.readingId)) throw new BackupFormatError('The backup is damaged: a loan points to a reading that is not in the file.')
+  }
   if (tables.grRecords !== undefined && !Array.isArray(tables.grRecords)) throw new BackupFormatError('The backup is damaged: its "grRecords" list is not a list.')
   for (const r of tables.grRecords ?? []) {
     if (typeof r?.bookId !== 'string' || typeof r.id !== 'number') throw new BackupFormatError('The backup is damaged: a Goodreads record has no Book Id.')

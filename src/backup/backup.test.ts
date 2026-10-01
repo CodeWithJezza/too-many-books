@@ -58,6 +58,17 @@ describe('backup and restore', () => {
     expect(await db.works.count()).toBe(1)
   })
 
+  it('round-trips manual loans and rejects one tied to a missing reading', async () => {
+    await seed()
+    const [w] = await db.works.toArray()
+    const [r] = await db.readings.toArray()
+    await db.loans.add({ workId: w.id!, readingId: r.id!, source: 'manual', library: '', format: 'ebook' })
+    const good = JSON.parse(JSON.stringify(await createBackup(db)))
+    expect(validateBackup(good).summary.loans).toBe(good.tables.loans.length)
+    const bad = { ...good, tables: { ...good.tables, loans: good.tables.loans.map((l: { source: string }) => (l.source === 'manual' ? { ...l, readingId: 9999 } : l)) } }
+    expect(() => validateBackup(bad)).toThrow(/reading that is not/)
+  })
+
   it('rolls back and keeps the current library if the restore fails midway', async () => {
     await seed()
     const good = validateBackup(JSON.parse(JSON.stringify(await createBackup(db)))).file

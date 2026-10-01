@@ -80,8 +80,8 @@ export function WorkPanel({ id, onClose, onEdit }: { id?: number; onClose: () =>
               <ol className="rows">
                 {work.loans.map((l) => (
                   <li key={l.id} className="row">
-                    <div className="row-main"><span className="row-title">Libby{l.format ? ` · ${FORMAT[l.format]}` : ""}</span></div>
-                    <div className="row-sub">Borrowed {formatDate(l.borrowed)} · {l.library}</div>
+                    <div className="row-main"><span className="row-title">{l.source === 'libby' ? 'Libby' : 'Library'}{l.format ? ` · ${FORMAT[l.format]}` : ""}</span></div>
+                    <div className="row-sub">Borrowed {l.borrowed ? formatDate(l.borrowed) : 'date unknown'}{l.library ? ` · ${l.library}` : ''}</div>
                   </li>
                 ))}
               </ol>

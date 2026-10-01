@@ -39,14 +39,22 @@ export interface Reading {
   review?: string
 }
 
+/**
+ * One borrow from a library. A Libby import supplies them in bulk; the reader can also
+ * record one by hand. Either way it is evidence of borrowing, not of reading.
+ */
 export interface Loan {
   id?: number
   workId: number
-  source: 'libby'
-  borrowed: DatePart
+  source: 'libby' | 'manual'
+  /** Absent when unknown; never guessed. */
+  borrowed?: DatePart
+  /** Library name. Empty when the reader did not say which. */
   library: string
   format?: Format
-  /** Import record this Loan came from, when it came from an import. */
+  /** The Reading this borrow led to. Absent for borrows not (yet) tied to a Reading. Several Loans can share one Reading. */
+  readingId?: number
+  /** Import record this Loan came from, when it came from an import. Only imported Loans have one (ADR 0002). */
   recordKey?: string
 }
 

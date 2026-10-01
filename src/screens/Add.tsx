@@ -3,6 +3,7 @@ import { Icon } from '../components/Icon'
 import { Jacket } from '../components/Jacket'
 import { StarsInput } from '../components/StarsInput'
 import { DateField, Segmented, dateOk } from '../components/FormControls'
+import { LibraryLoanField, blankLoan } from '../components/LibraryLoanField'
 import { toDatePart, todayIso, withPrecision, type Precision } from '../lib/dates'
 
 import { GENRES } from '../lib/genres'
@@ -10,7 +11,7 @@ import { matchHit, searchLibrary } from '../lib/match'
 import { suggestGenres } from '../metadata/suggest'
 import type { MetadataHit } from '../metadata/types'
 import { useLookupMode } from '../settings'
-import { addEntry, searchMetadata, useWorksRaw, type AddStatus } from '../storage'
+import { addEntry, searchMetadata, useLibraryNames, useWorksRaw, type AddStatus } from '../storage'
 import type { Format, GenreId, Work, WorkSummary } from '../types'
 
 type Pick =
@@ -47,6 +48,8 @@ export function Add({ onSaved }: { onSaved: (workId: number) => void }) {
   const [hasStart, setHasStart] = useState(false)
   const [rating, setRating] = useState<number | undefined>()
   const [review, setReview] = useState('')
+  const [loan, setLoan] = useState(blankLoan())
+  const libraryNames = useLibraryNames()
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | undefined>()
 
@@ -122,7 +125,8 @@ export function Add({ onSaved }: { onSaved: (workId: number) => void }) {
   const finishShown = status === 'finished' || status === 'dnf'
   const startBad = readingFields && startShown && !dateOk(start.iso, start.precision)
   const finishBad = readingFields && finishShown && !dateOk(finish.iso, finish.precision)
-  const canSave = !!picked && !saving && !startBad && !finishBad
+  const loanBad = readingFields && loan.on && !dateOk(loan.date.iso, loan.date.precision)
+  const canSave = !!picked && !saving && !startBad && !finishBad && !loanBad
 
   const busy = useRef(false)
   async function save() {
@@ -142,12 +146,14 @@ export function Add({ onSaved }: { onSaved: (workId: number) => void }) {
             review: review.trim() || undefined,
           }
         : undefined
+      const loanInput = readingFields && loan.on ? { library: loan.library, borrowed: toDatePart(loan.date.iso, loan.date.precision) } : undefined
       const id = await addEntry(
         picked.kind === 'existing'
-          ? { workId: picked.work.id, status, reading }
+          ? { workId: picked.work.id, status, reading, loan: loanInput }
           : {
               status,
               reading,
+              loan: loanInput,
               newWork: {
                 title: text,
                 author,
@@ -267,6 +273,8 @@ export function Add({ onSaved }: { onSaved: (workId: number) => void }) {
             {(status === 'finished' || status === 'dnf') && (
               <DateField label={status === 'dnf' ? 'Stopped' : 'Finished'} iso={finish.iso} precision={finish.precision} onIso={(iso) => setFinish({ ...finish, iso })} onPrecision={(p) => setFinish(withPrecision(finish, p))} />
             )}
+
+            <LibraryLoanField value={loan} onChange={setLoan} names={libraryNames} onDate={(p) => withPrecision(loan.date, p)} />
 
             <div className="field">
               <span className="label">Rating</span>
