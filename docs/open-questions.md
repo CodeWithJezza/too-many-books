@@ -11,3 +11,8 @@ Open Library's series and ISBN coverage is good enough for a personal app but no
 
 ## Manga and light novels — RESOLVED (tag, not a type)
 Manga and light novels stay ordinary Works, distinguished by a Tag ("manga", "light novel"), which the app suggests from the title or Metadata subjects but never assigns. A separate Work type was considered and rejected for now: Libby and Goodreads report them as ordinary ebooks and books, so a second kind would have to be guessed or entered by hand, and would split counts like "books finished" in ways the sources do not support. Tags already filter Library and Stats. Revisit if the Tag filter proves too weak for stats, for example if the reader wants volumes counted apart from books.
+
+## Metadata for light novels and manga (later)
+Open Library does not hold many light novels or manga volumes (checked with Peddler in Another World, Fushi no Kami and its ISBNs), and where it does, subjects are usually empty. The reader's own research points to Hardcover and AniList as alternative providers; ADR 0004 already puts providers behind an interface. Not built; the reader is researching them first. Things to test when picking one: whether it resolves an ISBN to an edition and its form (Libby gives a light novel and its manga the same title, and only the ISBN differs), whether it returns genres and page counts, whether it can be called from a browser without a secret key (Hardcover's API needs a token), and rate limits.
+
+Known data point from the reader's Libby export: Fushi no Kami: Rebuilding Civilization Starts With a Village, Volume 1 has ISBN 9781718330689 (light novel) and 9781718337596 (manga), under two Libby title IDs with identical titles.
