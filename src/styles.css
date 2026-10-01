@@ -489,3 +489,4 @@ button.st-seg { min-height: 22px; }
 .dot.read { background: var(--ink); }
 .dot.gap { border-style: dashed; border-color: var(--mute); }
 .st-legend .dot { margin-right: 8px; vertical-align: -2px; }
+.ib-more { display: grid; place-items: center; padding: 20px 0 40px; list-style: none; }

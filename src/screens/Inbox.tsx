@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Jacket } from '../components/Jacket'
 import { Segmented } from '../components/FormControls'
 import { formatDate } from '../lib/dates'
@@ -31,6 +31,26 @@ const asWork = (g: InboxGroup, coverUrl?: string): WorkSummary => ({
 })
 
 const FORMS = [{ tag: 'light novel', label: 'Light novel' }, { tag: 'manga', label: 'Manga' }]
+
+/** Rows drawn at a time. Hundreds of rows at once, each with a cover and a lookup, made the Inbox stall on open. */
+const PAGE = 25
+
+/** Draws the next page of rows when it scrolls near, and offers a button when it cannot tell. */
+function More({ left, onMore }: { left: number; onMore: () => void }) {
+  const ref = useRef<HTMLLIElement>(null)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const obs = new IntersectionObserver((e) => { if (e.some((x) => x.isIntersecting)) onMore() }, { rootMargin: '600px' })
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [onMore, left])
+  return (
+    <li ref={ref} className="ib-more">
+      <button type="button" className="btn-quiet" onClick={onMore}>Show {Math.min(PAGE, left)} more · {left} left</button>
+    </li>
+  )
+}
 
 function GroupRow({ group, dismissed, onResolved }: { group: InboxGroup; dismissed: boolean; onResolved: (r: ResolveReceipt, what: string) => void }) {
   const newest = group.records[0]
@@ -179,6 +199,7 @@ export function Inbox() {
   const grDismissed = useGoodreads('dismissed')
   const [grSummary, setGrSummary] = useState<string | undefined>()
   const [view, setView] = useState<'pending' | 'dismissed'>('pending')
+  const [limit, setLimit] = useState(PAGE)
   const [summary, setSummary] = useState<ImportSummary | undefined>()
   const [error, setError] = useState<string | undefined>()
   const [note, setNote] = useState<string | undefined>()
@@ -294,8 +315,8 @@ export function Inbox() {
       {error && <p className="form-error" role="alert">{error}</p>}
 
       <div className="shelf-tabs" role="group" aria-label="Inbox view">
-        <button type="button" className="shelf-tab" aria-pressed={view === 'pending'} onClick={() => setView('pending')}>To review <span>{pendingGroups.length + (grPending?.length ?? 0)}</span></button>
-        <button type="button" className="shelf-tab" aria-pressed={view === 'dismissed'} onClick={() => setView('dismissed')}>Dismissed <span>{dismissedGroups.length + (grDismissed?.length ?? 0)}</span></button>
+        <button type="button" className="shelf-tab" aria-pressed={view === 'pending'} onClick={() => { setView('pending'); setLimit(PAGE) }}>To review <span>{pendingGroups.length + (grPending?.length ?? 0)}</span></button>
+        <button type="button" className="shelf-tab" aria-pressed={view === 'dismissed'} onClick={() => { setView('dismissed'); setLimit(PAGE) }}>Dismissed <span>{dismissedGroups.length + (grDismissed?.length ?? 0)}</span></button>
       </div>
 
       {pending === undefined ? (
@@ -307,10 +328,21 @@ export function Inbox() {
         </div>
       ) : (
         <ul className="ib-list" aria-label={view === 'pending' ? 'Books to review' : 'Dismissed books'}>
-          {(view === 'pending' ? grPending : grDismissed)?.map((r) => (
-            <GoodreadsRow key={`gr${r.id}-${JSON.stringify(r.seen)}`} rec={r} works={works} dismissed={view === 'dismissed'} onDone={(text, run) => { setNote(undefined); setUndo({ text, run }) }} />
-          ))}
-          {groups.map((g) => <GroupRow key={g.key} group={g} dismissed={view === 'dismissed'} onResolved={(r, what) => { setNote(undefined); setUndo({ text: `Marked “${r.title}” ${what}.`, run: () => undoResolve(r) }) }} />)}
+          {(() => {
+            const gr = (view === 'pending' ? grPending : grDismissed) ?? []
+            const shownGr = gr.slice(0, limit)
+            const shownGroups = groups.slice(0, Math.max(0, limit - shownGr.length))
+            const left = gr.length + groups.length - shownGr.length - shownGroups.length
+            return (
+              <>
+                {shownGr.map((r) => (
+                  <GoodreadsRow key={`gr${r.id}-${JSON.stringify(r.seen)}`} rec={r} works={works} dismissed={view === 'dismissed'} onDone={(text, run) => { setNote(undefined); setUndo({ text, run }) }} />
+                ))}
+                {shownGroups.map((g) => <GroupRow key={g.key} group={g} dismissed={view === 'dismissed'} onResolved={(r, what) => { setNote(undefined); setUndo({ text: `Marked “${r.title}” ${what}.`, run: () => undoResolve(r) }) }} />)}
+                {left > 0 && <More left={left} onMore={() => setLimit((l) => l + PAGE)} />}
+              </>
+            )
+          })()}
         </ul>
       )}
     </main>
