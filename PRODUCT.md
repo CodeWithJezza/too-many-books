@@ -28,7 +28,7 @@ Vocabulary is fixed in docs/CONTEXT.md: Work, Reading, Series, Loan, Inbox, Shel
 
 ## Capabilities and Constraints
 
-Offline, touch-first. Open Library metadata (covers, subjects) as suggestions only. Stats: books per year/month, genre split, rating distribution, format split, top authors; unknown-date exclusions must be stated. Out of v1: goals, sync, sharing, series-completion and pages-per-year charts. See docs/BUILD_BRIEF.md.
+Offline, touch-first. Open Library metadata (covers, subjects) as suggestions only; AniList supplies genre suggestions for books tagged manga or light novel. Stats: books per year/month, genre split, rating distribution, format split, top authors, Library loans, all filterable by genre, tag, rating and format with tap-through to Library; unknown-date exclusions must be stated. A pages-per-year/month chart exists but is optional and hidden until switched on. Out of v1: goals, sync, sharing, series-completion chart. See docs/BUILD_BRIEF.md.
 
 ## Brand Commitments
 

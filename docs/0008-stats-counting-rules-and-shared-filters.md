@@ -10,7 +10,9 @@ Every Stats chart follows the same counting rules, and Stats and Library filter 
 
 **Excluded counts.** Any chart that drops Readings (unknown date, unknown length, year-only in a month chart) says how many, and the note opens those books.
 
-**Filters.** One filter model serves both screens. Work-level facets (Genre, Tag) describe the book. Reading-level facets (Rating, Format, Finish year and month, status) describe a read-through. A Work matches a Library filter when at least one of its Readings satisfies every Reading-level facet together, so "audiobook, rated 5" never matches an ebook rated 5 plus an unrelated audiobook. Stats applies the same facets to Readings, then counts the Readings that pass. Unrated is its own choice, not a low score; Finish year can be "unknown". Shelf applies to Library only, since Stats already counts finished Readings. Series is not a facet until Series has a screen of its own.
+**Filters.** One filter model serves both screens. Work-level facets (Genre, Tag, Series) describe the book. Reading-level facets (Rating, Format, Finish year and month, status) describe a read-through. A Work matches a Library filter when at least one of its Readings satisfies every Reading-level facet together, so "audiobook, rated 5" never matches an ebook rated 5 plus an unrelated audiobook. Stats applies the same facets to Readings, then counts the Readings that pass. Unrated is its own choice, not a low score; Finish year can be "unknown". Shelf applies to Library only, since Stats already counts finished Readings. A Series facet matches Works whose series name has the same key (case, articles and edition labels aside; (Manga) and (Light Novel) stay different).
+
+**Series progress** counts volumes (Works), not Readings: a volume is read when any of its Readings is finished. It counts up to the highest volume held, shows whole-number gaps below it, and never counts a volume the app has not seen. Genre, Tag and Series narrow it; Rating and Format do not.
 
 **Drill-through.** Tapping a chart bar, segment or ranked row opens Library with the facets that produce that bar, shown as removable chips so the filter is never hidden.
 

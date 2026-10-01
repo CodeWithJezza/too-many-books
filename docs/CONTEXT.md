@@ -13,7 +13,7 @@ One read-through of a Work, with a format, start and finish dates, a status, a r
 _Avoid_: Read, entry, log
 
 **Series**:
-An ordered group of Works. Each Work's position may be fractional (e.g. 2.5 for a novella). The app suggests a Series and position (from title patterns or Metadata) but never assigns one without the reader's confirmation. A Series page shows a description (from Metadata, if found) and every known volume in order, marking which the reader has read.
+An ordered group of Works that share a series name. Each Work's position may be fractional (e.g. 2.5 for a novella). The app suggests a Series and position from a title pattern such as "Name, Volume 3" but never assigns one without the reader's confirmation. A Series page shows every volume in the library in order, marking which the reader has read, and shows whole-number gaps below the highest volume held; it never invents a volume past that. A manga and its light novel are separate Series.
 _Avoid_: Saga, universe
 
 **Loan**:
@@ -45,7 +45,7 @@ Descriptive details about a Work (cover, page count, subjects, series) looked up
 _Avoid_: Enrichment, book info
 
 **Metadata provider**:
-An outside catalog the app looks up Metadata from. Open Library is the only provider in v1; others (such as Hardcover) can be added later.
+An outside catalog the app looks up Metadata from. Open Library is the primary provider. AniList is also used, only for genre suggestions on books the reader has tagged "manga" or "light novel". Others can be added later.
 _Avoid_: Source, API
 
 **Genre**:

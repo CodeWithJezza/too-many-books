@@ -1,3 +1,5 @@
 # Changed Goodreads rows re-enter the Inbox as updates; local edits always win
 
 Goodreads rows can change between exports (a to-read book gets finished, a rating is edited), unlike Libby borrows. A re-imported row that differs from what was last seen returns to the Inbox as an update showing only the fields that changed at the source; unchanged rows are skipped silently. Fields the reader has edited in the app are never proposed for overwrite. This requires storing each imported field's value as of the last import so that "changed at the source" can be told apart from "edited here", which costs some extra data per Import record. The simpler alternative, treating every Import record as immutable, would leave a book moved from to-read to read on Goodreads permanently stale here.
+
+Libby borrows stay immutable, as above. The Inbox offers Finished, DNF, Want to read, Just link loans, or Dismiss for a Libby group; Finished and DNF are dated to the newest borrow month and all Loans are kept.
