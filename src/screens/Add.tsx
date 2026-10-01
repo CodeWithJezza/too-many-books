@@ -8,7 +8,7 @@ import { toDatePart, todayIso, withPrecision, type Precision } from '../lib/date
 
 import { GENRES } from '../lib/genres'
 import { matchHit, searchLibrary } from '../lib/match'
-import { suggestGenres } from '../metadata/suggest'
+import { suggestGenres, suggestTags } from '../metadata/suggest'
 import type { MetadataHit } from '../metadata/types'
 import { useLookupMode } from '../settings'
 import { addEntry, searchMetadata, useLibraryNames, useWorksRaw, type AddStatus } from '../storage'
@@ -41,6 +41,7 @@ export function Add({ onSaved }: { onSaved: (workId: number) => void }) {
   const [picked, setPicked] = useState<Pick | undefined>()
   const [author, setAuthor] = useState('')
   const [genres, setGenres] = useState<GenreId[]>([])
+  const [tags, setTags] = useState<string[]>([])
   const [status, setStatus] = useState<AddStatus>('finished')
   const [format, setFormat] = useState<Format>('print')
   const [start, setStart] = useState({ iso: todayIso(), precision: 'day' as Precision })
@@ -101,14 +102,17 @@ export function Add({ onSaved }: { onSaved: (workId: number) => void }) {
       setText(p.hit.title)
       setAuthor(p.hit.author)
       setGenres([]) // suggestions are marked, never pre-selected
+      setTags([])
     } else if (p.kind === 'existing') {
       setText(p.work.title)
       setAuthor(p.work.author)
       setGenres(p.work.genres)
+      setTags([])
     } else {
       setText(p.title)
       setAuthor('')
       setGenres([])
+      setTags([])
     }
   }
   function change() {
@@ -116,10 +120,12 @@ export function Add({ onSaved }: { onSaved: (workId: number) => void }) {
     setText('')
     setAuthor('')
     setGenres([])
+    setTags([])
     setTimeout(() => inputRef.current?.focus(), 0)
   }
 
   const suggested = picked?.kind === 'hit' ? suggestGenres(picked.hit.subjects) : []
+  const suggestedTags = picked && picked.kind !== 'existing' ? suggestTags(text, picked.kind === 'hit' ? picked.hit.subjects : []) : []
   const readingFields = status !== 'want'
   const startShown = status === 'reading' || hasStart
   const finishShown = status === 'finished' || status === 'dnf'
@@ -158,6 +164,7 @@ export function Add({ onSaved }: { onSaved: (workId: number) => void }) {
                 title: text,
                 author,
                 genres,
+                tags,
                 pageCount: picked.kind === 'hit' ? picked.hit.pageCount : undefined,
                 coverUrl: picked.kind === 'hit' ? picked.hit.coverUrl : undefined,
                 externalIds: picked.kind === 'hit' ? { openLibrary: [picked.hit.key], isbn: picked.hit.isbns } : undefined,
@@ -299,6 +306,18 @@ export function Add({ onSaved }: { onSaved: (workId: number) => void }) {
                     {g.label}{suggested.includes(g.id) && <span className="sug"> · suggested</span>}
                   </button>
                 )
+              })}
+            </div>
+          </fieldset>
+        )}
+
+        {suggestedTags.length > 0 && (
+          <fieldset className="field">
+            <legend>Tags <span className="hint-inline">optional, suggested</span></legend>
+            <div className="genre-picks">
+              {suggestedTags.map((t) => {
+                const on = tags.includes(t)
+                return <button key={t} type="button" className="genre-pick" aria-pressed={on} onClick={() => setTags(on ? tags.filter((x) => x !== t) : [...tags, t])}>{t}<span className="sug"> · suggested</span></button>
               })}
             </div>
           </fieldset>

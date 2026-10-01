@@ -1,5 +1,5 @@
 import type { ImportRecord, Work } from '../types'
-import { norm } from './match'
+import { norm, titleKey } from './match'
 
 export type GroupMatch = { work: Work; kind: 'exact' | 'fuzzy' }
 
@@ -13,9 +13,8 @@ export interface InboxGroup {
   match?: GroupMatch
 }
 
-const stripArticle = (s: string) => s.replace(/^(the|a|an) /, '')
-/** Ignores a trailing parenthetical such as "(Unabridged)" so edition labels do not split a Work. */
-export const nameKey = (title: string, author: string) => `${stripArticle(norm(title.replace(/\s*\([^)]*\)\s*$/, '')))}|${norm(author)}`
+/** Edition labels such as "(Unabridged)" and "Vol." versus "Volume" do not split a Work; see titleKey. */
+export const nameKey = (title: string, author: string) => `${titleKey(title)}|${norm(author)}`
 
 /**
  * Resolves an import record to a Work in three tiers (BUILD_BRIEF): exact on a

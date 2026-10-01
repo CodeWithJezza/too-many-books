@@ -6,6 +6,36 @@ export const norm = (s: string) =>
 const stripArticle = (s: string) => s.replace(/^(the|a|an) /, '')
 const sameName = (a: string, b: string) => stripArticle(norm(a)) === stripArticle(norm(b))
 
+/** Words that make a parenthetical part of what the book is, not just an edition label: (Manga) and (Light Novel) are different books. */
+const FORM = /light novel|manga|graphic novel|comic/
+
+/**
+ * A title reduced to what identifies the book: no article, no edition labels such as
+ * "(Unabridged)", and "Volume 3" / "Vol. 3" the same. The volume number and a form marker
+ * stay, so Vol. 3 never matches Vol. 2 and a manga never matches its light novel.
+ */
+export function titleKey(title: string): string {
+  const t = title.replace(/\(([^)]*)\)/g, (_, inner: string) => (FORM.test(inner.toLowerCase()) ? ` ${inner} ` : ' '))
+  return stripArticle(norm(t).replace(/\b(volume|vol) (\d+)\b/g, 'vol $2'))
+}
+
+/** Same author, allowing one name to be a part of the other ("Touya" within "Touya, chibi"). A missing author matches anyone. */
+export function authorsCompatible(a: string, b: string): boolean {
+  const ta = new Set(norm(a).split(' ').filter(Boolean))
+  const tb = new Set(norm(b).split(' ').filter(Boolean))
+  if (ta.size === 0 || tb.size === 0) return true
+  const [small, big] = ta.size <= tb.size ? [ta, tb] : [tb, ta]
+  return [...small].every((t) => big.has(t))
+}
+
+/** What to ask Open Library: the title without labels, the volume, and the first author. */
+export function lookupQuery(title: string, author: string): string {
+  const vol = title.match(/\b(?:volume|vol\.?)\s*(\d+)/i)?.[1]
+  const base = title.replace(/\([^)]*\)/g, ' ').replace(/,?\s*\b(?:volume|vol\.?)\s*\d+\b/i, ' ').replace(/\s+/g, ' ').trim()
+  const first = author.split(',')[0].trim()
+  return [base, first, vol ? `Vol. ${vol}` : ''].filter(Boolean).join(' ')
+}
+
 export type MatchKind = 'exact' | 'fuzzy'
 
 /**

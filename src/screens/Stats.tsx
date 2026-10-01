@@ -2,6 +2,8 @@ import { useMemo, useState } from 'react'
 import { GENRES, NO_GENRE_INK, genre } from '../lib/genres'
 import { defaultQuery, noFacets, type Facets, type LibraryQuery } from '../lib/filter'
 import { computeLoanStats } from '../lib/loanStats'
+import { computePageStats } from '../lib/pages'
+import { setShowPages, useShowPages } from '../settings'
 import { computeStats, type Key, type YearFilter } from '../lib/stats'
 import { useReadingData } from '../storage'
 import type { Format, GenreId } from '../types'
@@ -33,6 +35,8 @@ export function Stats({ onOpenLibrary }: { onOpenLibrary: (q: LibraryQuery) => v
   const [sel, setSel] = useState<Selection | undefined>()
   const s = useMemo(() => (data ? computeStats(data.readings, data.works, year, facets) : undefined), [data, year, facets])
   const ls = useMemo(() => (data ? computeLoanStats(data.loans, data.readings, data.works, year, facets) : undefined), [data, year, facets])
+  const showPages = useShowPages()
+  const ps = useMemo(() => (data && showPages ? computePageStats(data.readings, data.works, year, facets) : undefined), [data, showPages, year, facets])
   const tags = useMemo(() => [...new Set((data?.works ?? []).flatMap((w) => w.tags))].sort(), [data])
   const facetsOn = JSON.stringify(facets) !== JSON.stringify(noFacets)
   const setFacet = <K extends keyof Facets>(k: K, v: Facets[K]) => { setFacets((f) => ({ ...f, [k]: v })); setSel(undefined) }
@@ -265,6 +269,44 @@ export function Stats({ onOpenLibrary }: { onOpenLibrary: (q: LibraryQuery) => v
       </div>
       )}
 
+      {ps && (
+        <>
+          <h2 className="set-title st-section">Pages</h2>
+          <p className="st-summary">{ps.total.toLocaleString()} pages in {ps.counted} {ps.counted === 1 ? 'book' : 'books'} {scope}</p>
+          <p className="hint">Pages come from each book's page count, so they are an estimate. {ps.audiobooks > 0 && <>{ps.audiobooks} {ps.audiobooks === 1 ? 'audiobook is' : 'audiobooks are'} left out. </>}{ps.pagesUnknown > 0 && <>{ps.pagesUnknown} {ps.pagesUnknown === 1 ? 'book has' : 'books have'} no page count. <button type="button" className="btn-link inline" onClick={() => open({ missing: 'pages', format: facets.format === 'any' ? 'any' : facets.format })}>Show {ps.pagesUnknown === 1 ? 'it' : 'them'}</button></>}</p>
+          <div className="st-grid">
+            <section className="st-card st-wide" aria-labelledby="st-pyears">
+              <h2 id="st-pyears" className="set-title">Pages per year</h2>
+              <ul className="st-bars">
+                {ps.perYear.map((y) => (
+                  <li key={y.year}>
+                    <span className="st-bl">{y.year}</span>
+                    <span className="st-track"><span className="st-fill" style={{ width: `${(y.pages / Math.max(1, ...ps.perYear.map((p) => p.pages))) * 100}%` }} /></span>
+                    <span className="st-bn">{y.pages.toLocaleString()}</span>
+                  </li>
+                ))}
+              </ul>
+              {ps.undated > 0 && <p className="hint">{ps.undated} counted {ps.undated === 1 ? 'book has' : 'books have'} no finish date and {ps.undated === 1 ? 'is' : 'are'} in no year.</p>}
+            </section>
+            {ps.monthYear !== undefined && (
+              <section className="st-card st-wide" aria-labelledby="st-pmonths">
+                <h2 id="st-pmonths" className="set-title">Pages per month, {ps.monthYear}</h2>
+                <div className="st-cols months">
+                  {ps.perMonth.map((n, i) => (
+                    <div key={i} className="st-col" role="img" aria-label={`${MONTHS[i]}: ${n} pages`}>
+                      <span className="st-n">{n || ''}</span>
+                      <span className="st-rbar" style={{ height: `${(n / Math.max(1, ...ps.perMonth)) * 120}px` }} />
+                      <span className="st-l">{MONTHS[i]}</span>
+                    </div>
+                  ))}
+                </div>
+                {ps.monthUnknown > 0 && <p className="hint">{ps.monthUnknown} finished in {ps.monthYear} {ps.monthUnknown === 1 ? 'is' : 'are'} recorded only to the year, so {ps.monthUnknown === 1 ? 'it is' : 'they are'} not in a month.</p>}
+              </section>
+            )}
+          </div>
+        </>
+      )}
+
       {(ls.loanCount > 0 || ls.undated > 0 || ls.notFinished.length > 0 || ls.borrowed > 0) && (
         <>
           <h2 className="set-title st-section">Library loans</h2>
@@ -337,6 +379,14 @@ export function Stats({ onOpenLibrary }: { onOpenLibrary: (q: LibraryQuery) => v
           </div>
         </>
       )}
+
+      <section className="st-more-charts" aria-labelledby="st-optional">
+        <h2 id="st-optional" className="set-title">More charts</h2>
+        <label className="check">
+          <input type="checkbox" checked={showPages} onChange={(e) => setShowPages(e.target.checked)} />
+          <span>Show pages read</span>
+        </label>
+      </section>
     </main>
   )
 }

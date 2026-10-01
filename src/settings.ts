@@ -72,3 +72,29 @@ export function setLibraryView(v: LibraryView): void {
 }
 
 export const useLibraryView = (): LibraryView => useSyncExternalStore(subscribe, getLibraryView)
+
+/** Optional Stats charts that start hidden. A per-device preference, kept in this browser. */
+const PAGES_KEY = 'tmb-stats-pages'
+let pagesMemory = false
+
+export function getShowPages(): boolean {
+  try {
+    const v = globalThis.localStorage?.getItem(PAGES_KEY)
+    if (v === '1' || v === '0') return v === '1'
+  } catch {
+    /* private mode: fall through to this session's value */
+  }
+  return pagesMemory
+}
+
+export function setShowPages(on: boolean): void {
+  pagesMemory = on
+  try {
+    globalThis.localStorage?.setItem(PAGES_KEY, on ? '1' : '0')
+  } catch {
+    /* the choice still holds for this session */
+  }
+  globalThis.dispatchEvent?.(new Event(EVENT))
+}
+
+export const useShowPages = (): boolean => useSyncExternalStore(subscribe, getShowPages)

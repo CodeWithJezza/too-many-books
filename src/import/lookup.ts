@@ -1,17 +1,17 @@
 import { useEffect, useRef, useState } from 'react'
-import { nameKey } from '../lib/inbox'
+import { authorsCompatible, lookupQuery, titleKey } from '../lib/match'
 import type { MetadataHit } from '../metadata/types'
 import { useLookupMode } from '../settings'
 import { searchMetadata } from '../storage'
 
 /**
  * The Open Library hit that is the same book as an Inbox group, or none. Only an exact
- * normalized title and author match counts, because its subjects and page count are then
+ * normalized title and compatible author counts (see titleKey), because its subjects and page count are then
  * safe to offer as suggestions; a near miss could suggest the wrong Genre.
  */
 export function bestHit(hits: MetadataHit[], title: string, author: string): MetadataHit | undefined {
-  const k = nameKey(title, author)
-  return hits.find((h) => nameKey(h.title, h.author) === k)
+  const k = titleKey(title)
+  return hits.find((h) => titleKey(h.title) === k && authorsCompatible(h.author, author))
 }
 
 // Open Library is a free service: look up at most two rows at a time, on demand.
@@ -45,7 +45,7 @@ export function useLookup(title: string, author: string, enabled: boolean) {
     if (started.current || !enabled || mode === 'off') return
     started.current = true
     setLookup({ state: 'loading' })
-    slot(() => searchMetadata(`${title} ${author}`.trim()))
+    slot(() => searchMetadata(lookupQuery(title, author)))
       .then((hits) => setLookup({ state: 'done', hit: bestHit(hits, title, author) }))
       .catch(() => setLookup({ state: 'failed' }))
   }

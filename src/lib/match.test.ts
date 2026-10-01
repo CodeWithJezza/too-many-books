@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { matchHit, searchLibrary } from './match'
+import { lookupQuery, matchHit, searchLibrary, titleKey } from './match'
 import type { MetadataHit } from '../metadata/types'
 import type { Work } from '../types'
 
@@ -42,5 +42,17 @@ describe('dates', () => {
   })
   it('formats local today as ISO', () => {
     expect(todayIso(new Date(2026, 0, 5))).toBe('2026-01-05')
+  })
+})
+
+describe('lookupQuery and titleKey', () => {
+  it('asks for the title without labels, then the first author and the volume', () => {
+    expect(lookupQuery('A Tale of the Secret Saint (Light Novel), Volume 3', 'Touya, chibi')).toBe('A Tale of the Secret Saint Touya Vol. 3')
+    expect(lookupQuery('Snow Crash', 'Neal Stephenson')).toBe('Snow Crash Neal Stephenson')
+  })
+  it('keeps the volume and the form, drops other edition labels', () => {
+    expect(titleKey('Martian (Unabridged)')).toBe(titleKey('The Martian'))
+    expect(titleKey('X (Manga), Vol. 2')).not.toBe(titleKey('X (Light Novel), Vol. 2'))
+    expect(titleKey('X, Volume 2')).not.toBe(titleKey('X, Volume 3'))
   })
 })

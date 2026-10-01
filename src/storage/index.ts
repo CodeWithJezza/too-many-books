@@ -99,7 +99,7 @@ export type AddStatus = ReadingStatus | 'want'
 export interface AddInput {
   /** Attach to an existing Work, or create one from these fields. Never both. */
   workId?: number
-  newWork?: Pick<Work, 'title' | 'author' | 'genres' | 'pageCount' | 'coverUrl' | 'externalIds'>
+  newWork?: Pick<Work, 'title' | 'author' | 'genres' | 'pageCount' | 'coverUrl' | 'externalIds'> & { tags?: string[] }
   status: AddStatus
   reading?: Pick<Reading, 'format' | 'start' | 'finish' | 'rating' | 'review'>
   /** Records that this Reading was borrowed from a library. Ignored for Want to read. */
@@ -119,7 +119,7 @@ export async function addEntry(input: AddInput, store: LibraryDB = db): Promise<
         ...input.newWork,
         title: input.newWork.title.trim(),
         author: input.newWork.author.trim(),
-        tags: [],
+        tags: [...new Set((input.newWork.tags ?? []).map((t) => t.trim()).filter(Boolean))],
         shelves: input.status === 'want' ? ['want'] : [],
       })) as number
     } else if (input.status === 'want') {
@@ -200,6 +200,7 @@ export type Resolution =
 /** Reader-confirmed or cache-derived details, applied only when this resolve creates the Work. */
 export interface NewWorkDetails {
   genres?: GenreId[]
+  tags?: string[]
   pageCount?: number
   coverUrl?: string
   openLibrary?: string
@@ -256,7 +257,7 @@ export async function resolveGroupWithReceipt(input: ResolveInput, store: Librar
         title: newest.title,
         author: newest.author,
         genres: input.details?.genres ?? [],
-        tags: [],
+        tags: input.details?.tags ?? [],
         shelves: input.resolution.kind === 'want' ? ['want'] : [],
         coverUrl: newest.coverUrl ?? input.details?.coverUrl,
         pageCount: input.details?.pageCount,

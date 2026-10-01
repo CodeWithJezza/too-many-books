@@ -16,3 +16,12 @@ export function suggestGenres(subjects: string[]): GenreId[] {
   for (const [id, rx] of RULES) if (subjects.some((s) => rx.test(s))) out.add(id)
   return [...out]
 }
+
+/** Tags a title or its subjects point to, offered as one-tap suggestions; the reader confirms each. */
+export function suggestTags(title: string, subjects: string[] = []): string[] {
+  const hay = [title, ...subjects].join(' | ')
+  const out: string[] = []
+  if (/light novel/i.test(hay)) out.push('light novel')
+  if (/\bmanga\b/i.test(hay)) out.push('manga')
+  return out
+}

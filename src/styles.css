@@ -471,3 +471,4 @@ button.st-seg { min-height: 22px; }
 .letter-index button { min-width: 36px; min-height: 44px; border-radius: 4px; font-size: 14px; font-weight: 700; }
 .letter-index button:disabled { color: var(--mute); opacity: 0.35; cursor: default; }
 @media (max-width: 759px) { .letter-index { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; } }
+.st-more-charts { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule); }

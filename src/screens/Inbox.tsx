@@ -5,7 +5,7 @@ import { formatDate } from '../lib/dates'
 import { GENRES } from '../lib/genres'
 import { useLookup } from '../import/lookup'
 import { LookupLine } from '../components/LookupLine'
-import { suggestGenres } from '../metadata/suggest'
+import { suggestGenres, suggestTags } from '../metadata/suggest'
 import { buildGroups, isClean, type InboxGroup } from '../lib/inbox'
 import { ImportFormatError } from '../import/libby'
 import { importGoodreads } from '../storage/goodreads'
@@ -37,6 +37,7 @@ function GroupRow({ group, dismissed, onResolved }: { group: InboxGroup; dismiss
   const [error, setError] = useState<string | undefined>()
   const [genres, setGenres] = useState<GenreId[]>([])
   const [showGenres, setShowGenres] = useState(false)
+  const [tags, setTags] = useState<string[]>([])
 
   const ids = group.records.map((r) => r.id!)
   const match = group.match
@@ -47,8 +48,9 @@ function GroupRow({ group, dismissed, onResolved }: { group: InboxGroup; dismiss
   const { ref, lookup, run: lookNow, mode } = useLookup(group.title, group.author, !dismissed && match?.kind !== 'exact')
   const hit = lookup.hit
   const suggested = hit ? suggestGenres(hit.subjects) : []
+  const suggestedTags = suggestTags(group.title, hit?.subjects)
   const details = makesNewWork
-    ? { genres, pageCount: hit?.pageCount, coverUrl: hit?.coverUrl, openLibrary: hit?.key, isbn: hit?.isbns }
+    ? { genres, tags, pageCount: hit?.pageCount, coverUrl: hit?.coverUrl, openLibrary: hit?.key, isbn: hit?.isbns }
     : undefined
 
   async function resolve(input: ResolveInput, what: string) {
@@ -104,6 +106,14 @@ function GroupRow({ group, dismissed, onResolved }: { group: InboxGroup; dismiss
                 )
               })}
             </div>}
+            {suggestedTags.length > 0 && (
+              <div className="genre-picks" role="group" aria-label={`Tags for ${group.title}`}>
+                {suggestedTags.map((t) => {
+                  const on = tags.includes(t)
+                  return <button key={t} type="button" className="genre-pick sm" aria-pressed={on} onClick={() => setTags(on ? tags.filter((x) => x !== t) : [...tags, t])}>Tag: {t}<span className="sug"> · suggested</span></button>
+                })}
+              </div>
+            )}
           </div>
         )}
 
