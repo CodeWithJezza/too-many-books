@@ -5,6 +5,7 @@ import { formatDate } from '../lib/dates'
 import { GENRES } from '../lib/genres'
 import { matchGoodreads } from '../lib/inbox'
 import { useLookup } from '../import/lookup'
+import { LookupLine } from '../components/LookupLine'
 import { suggestGenres } from '../metadata/suggest'
 import { db } from '../storage'
 import { applyGoodreadsUpdate, keepMine, resolveGoodreads, setGoodreadsDismissed, undoResolveGoodreads, undoUpdate, type GoodreadsAs, type UpdateSnapshot } from '../storage/goodreads'
@@ -69,7 +70,7 @@ export function GoodreadsRow({ rec, works, dismissed, onDone }: {
   const workId = match && same ? match.work.id : undefined
   const undecided = match?.kind === 'fuzzy' && same === undefined
   const makesNewWork = !isUpdate && workId === undefined
-  const { ref, lookup } = useLookup(f.title, f.author, !dismissed && makesNewWork)
+  const { ref, lookup, run: lookNow, mode } = useLookup(f.title, f.author, !dismissed && makesNewWork)
   const hit = lookup.hit
   const suggested = hit ? suggestGenres(hit.subjects) : []
   const details = makesNewWork ? { genres, pageCount: hit?.pageCount, coverUrl: hit?.coverUrl, openLibrary: hit?.key, isbn: hit?.isbns } : undefined
@@ -123,13 +124,7 @@ export function GoodreadsRow({ rec, works, dismissed, onDone }: {
             <Segmented label={`Add ${f.title} as`} value={as} options={AS} onChange={setAs} />
             {makesNewWork && (
               <>
-                <p className="ib-lookup" role={lookup.state === 'failed' ? 'status' : undefined}>
-                  {lookup.state === 'loading' && 'Checking Open Library…'}
-                  {lookup.state === 'done' && hit && !undecided && 'Found on Open Library. Its page count and cover are added when you save.'}
-                  {lookup.state === 'done' && hit && undecided && 'Found on Open Library. Answer the question above to use it.'}
-                  {lookup.state === 'done' && !hit && 'No sure match on Open Library, so nothing is suggested.'}
-                  {lookup.state === 'failed' && 'Could not reach Open Library. You can set genres later.'}
-                </p>
+                <LookupLine lookup={lookup} mode={mode} run={lookNow} undecided={undecided} saves="page count and cover are" />
                 <button type="button" className="btn-link" aria-expanded={showGenres} onClick={() => setShowGenres(!showGenres)}>
                   {genres.length ? `Genres: ${genres.map((g) => GENRES.find((x) => x.id === g)?.label).join(', ')}` : suggested.length ? `Set genres (${suggested.length} suggested)` : 'Set genres'}
                 </button>

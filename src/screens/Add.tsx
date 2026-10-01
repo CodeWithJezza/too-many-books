@@ -9,6 +9,7 @@ import { GENRES } from '../lib/genres'
 import { matchHit, searchLibrary } from '../lib/match'
 import { suggestGenres } from '../metadata/suggest'
 import type { MetadataHit } from '../metadata/types'
+import { useLookupMode } from '../settings'
 import { addEntry, searchMetadata, useWorksRaw, type AddStatus } from '../storage'
 import type { Format, GenreId, Work, WorkSummary } from '../types'
 
@@ -51,6 +52,7 @@ export function Add({ onSaved }: { onSaved: (workId: number) => void }) {
 
   // ----- title lookup: own library first, then Open Library -----
   const [hits, setHits] = useState<MetadataHit[]>([])
+  const lookupMode = useLookupMode()
   const [lookup, setLookup] = useState<'idle' | 'loading' | 'error'>('idle')
   const [open, setOpen] = useState(false)
   const listId = useId()
@@ -58,7 +60,7 @@ export function Add({ onSaved }: { onSaved: (workId: number) => void }) {
 
   useEffect(() => {
     const q = text.trim()
-    if (picked || q.length < 3) {
+    if (picked || q.length < 3 || lookupMode === 'off') {
       setHits([])
       setLookup('idle')
       return
@@ -71,7 +73,7 @@ export function Add({ onSaved }: { onSaved: (workId: number) => void }) {
         .catch((e) => { if (!ctrl.signal.aborted) { setHits([]); setLookup('error'); console.debug(e) } })
     }, 350)
     return () => { clearTimeout(t); ctrl.abort() }
-  }, [text, picked])
+  }, [text, picked, lookupMode])
 
   const own = useMemo(() => (picked ? [] : searchLibrary(works, text)), [works, text, picked])
   // A hit already in the library is shown once, as the library's own Work.
@@ -235,6 +237,7 @@ export function Add({ onSaved }: { onSaved: (workId: number) => void }) {
                       {r.kind === 'manual' && <span className="result-title">Enter “{r.title}” by hand</span>}
                     </li>
                   ))}
+                  {lookupMode === 'off' && <li className="result-note">Online lookup is off in Settings. Showing your own library; you can still enter it by hand.</li>}
                   {lookup === 'loading' && <li className="result-note" role="status">Searching Open Library…</li>}
                   {lookup === 'error' && <li className="result-note" role="status">Couldn't reach Open Library. You can still enter it by hand.</li>}
                 </ul>

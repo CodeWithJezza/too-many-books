@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { BackupFormatError, backupFileName, createBackup, markBackedUp, readingsCsv, restoreBackup, validateBackup, type BackupFile, type BackupSummary } from '../backup/backup'
 import { changesSinceBackup, lastBackupAt, subscribeChanges } from '../backup/changes'
+import { Segmented } from '../components/FormControls'
 import { isAppleTouch, isInstalled } from '../pwa'
+import { setLookupMode, useLookupMode, type LookupMode } from '../settings'
 import { db } from '../storage'
 import { useSyncExternalStore } from 'react'
 
@@ -29,6 +31,7 @@ export function Settings() {
   const [error, setError] = useState<string | undefined>()
   const [busy, setBusy] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
+  const lookupMode = useLookupMode()
 
   useEffect(() => {
     void navigator.storage?.persisted?.().then(setPersisted).catch(() => setPersisted(undefined))
@@ -96,6 +99,23 @@ export function Settings() {
           <button type="button" className="btn-primary" onClick={() => void backup()}>Download backup</button>
           <button type="button" className="btn-quiet" onClick={() => void csv()}>Export reading history (CSV)</button>
         </div>
+      </section>
+
+      <section className="set-section" aria-labelledby="lk">
+        <h2 id="lk" className="set-title">Book details online</h2>
+        <p>Looking a book up sends its title and author to Open Library, and this device's address to the sites that serve covers. Nothing else about you or your library is sent.</p>
+        <Segmented<LookupMode>
+          label="Book details online"
+          value={lookupMode}
+          options={[{ id: 'auto', label: 'Automatic' }, { id: 'ask', label: 'When I ask' }, { id: 'off', label: 'Off' }]}
+          onChange={setLookupMode}
+        />
+        <p className="hint" role="status">
+          {lookupMode === 'auto' && 'Inbox books are looked up as they come into view, to suggest genres and add page counts and covers. You still confirm every genre.'}
+          {lookupMode === 'ask' && 'Nothing is looked up on its own. Each Inbox book has a Look up details button, and the Add screen searches as you type.'}
+          {lookupMode === 'off' && 'Nothing is sent to Open Library. The Add screen shows only your own library and lets you type a book by hand, and Inbox books come in with just what your export says.'}
+        </p>
+        <p className="hint">Searches already saved on this device are still used. Covers saved with your books keep loading from the sites they came from. This choice belongs to this device and is not part of a backup.</p>
       </section>
 
       <section className="set-section" aria-labelledby="rs">

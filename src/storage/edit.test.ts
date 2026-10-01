@@ -89,3 +89,28 @@ describe('edits protect against later Goodreads imports (ADR 0003)', () => {
     void rows
   })
 })
+
+import { LookupOffError, searchMetadata } from './index'
+import { setLookupMode } from '../settings'
+import { vi } from 'vitest'
+
+describe('online lookups setting', () => {
+  it('with lookups off, nothing is fetched and a cached answer is still returned', async () => {
+    const fetchSpy = vi.fn(() => { throw new Error('network must not be touched') })
+    vi.stubGlobal('fetch', fetchSpy)
+    setLookupMode('off')
+    try {
+      await expect(searchMetadata('dune frank herbert', undefined, db)).rejects.toBeInstanceOf(LookupOffError)
+      await db.metadata.put({ query: 'cached query', hits: [{ providerId: 'open-library', key: '/works/X', title: 'T', author: 'A', subjects: [], isbns: [] }], at: Date.now() })
+      expect(await searchMetadata('cached query', undefined, db)).toHaveLength(1)
+      expect(fetchSpy).not.toHaveBeenCalled()
+    } finally {
+      setLookupMode('auto')
+      vi.unstubAllGlobals()
+    }
+  })
+  it('defaults to automatic', async () => {
+    const { getLookupMode } = await import('../settings')
+    expect(getLookupMode()).toBe('auto')
+  })
+})

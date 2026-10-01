@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { nameKey } from '../lib/inbox'
 import type { MetadataHit } from '../metadata/types'
+import { useLookupMode } from '../settings'
 import { searchMetadata } from '../storage'
 
 /**
@@ -30,30 +31,40 @@ async function slot<T>(fn: () => Promise<T>): Promise<T> {
 
 export type Lookup = { state: 'idle' | 'loading' | 'done' | 'failed'; hit?: MetadataHit }
 
-/** Looks the group up once, when it scrolls into view. Suggestions only; failure is silent and harmless. */
+/**
+ * Looks a row up once. In automatic mode that happens when it scrolls into view; in "ask" mode
+ * only when `run` is called; with lookups off, never. Suggestions only; failure is harmless.
+ */
 export function useLookup(title: string, author: string, enabled: boolean) {
+  const mode = useLookupMode()
   const ref = useRef<HTMLLIElement>(null)
   const [lookup, setLookup] = useState<Lookup>({ state: 'idle' })
   const started = useRef(false)
 
+  const run = () => {
+    if (started.current || !enabled || mode === 'off') return
+    started.current = true
+    setLookup({ state: 'loading' })
+    slot(() => searchMetadata(`${title} ${author}`.trim()))
+      .then((hits) => setLookup({ state: 'done', hit: bestHit(hits, title, author) }))
+      .catch(() => setLookup({ state: 'failed' }))
+  }
+
   useEffect(() => {
     const el = ref.current
-    if (!enabled || started.current || !el) return
+    if (mode !== 'auto' || !enabled || started.current || !el) return
     const obs = new IntersectionObserver(
       (entries) => {
-        if (!entries.some((e) => e.isIntersecting) || started.current) return
-        started.current = true
+        if (!entries.some((e) => e.isIntersecting)) return
         obs.disconnect()
-        setLookup({ state: 'loading' })
-        slot(() => searchMetadata(`${title} ${author}`.trim()))
-          .then((hits) => setLookup({ state: 'done', hit: bestHit(hits, title, author) }))
-          .catch(() => setLookup({ state: 'failed' }))
+        run()
       },
       { rootMargin: '200px' },
     )
     obs.observe(el)
     return () => obs.disconnect()
-  }, [title, author, enabled])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [title, author, enabled, mode])
 
-  return { ref, lookup }
+  return { ref, lookup, run, mode }
 }

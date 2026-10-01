@@ -4,6 +4,7 @@ import { db } from './instance'
 export { db }
 import { buildSeed } from './seed'
 import { untracked } from '../backup/changes'
+import { getLookupMode } from '../settings'
 import { openLibrary } from '../metadata/openLibrary'
 import type { MetadataHit } from '../metadata/types'
 import { parseLibbyExport } from '../import/libby'
@@ -120,10 +121,17 @@ export async function addEntry(input: AddInput, store: LibraryDB = db): Promise<
 }
 
 /** Cached metadata search: suggestions only, and usable offline for queries already seen. */
+export class LookupOffError extends Error {}
+
 export async function searchMetadata(query: string, signal?: AbortSignal, store: LibraryDB = db): Promise<MetadataHit[]> {
   const key = query.trim().toLowerCase()
   const cached = await store.metadata.get(key)
   if (cached && Date.now() - cached.at < 7 * 864e5) return cached.hits
+  // The one place that contacts Open Library: with lookups off, nothing leaves the device.
+  if (getLookupMode() === 'off') {
+    if (cached) return cached.hits
+    throw new LookupOffError('Online lookups are off')
+  }
   try {
     const hits = await openLibrary.search(query, signal)
     await store.metadata.put({ query: key, hits, at: Date.now() })

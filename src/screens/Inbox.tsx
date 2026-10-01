@@ -4,6 +4,7 @@ import { Segmented } from '../components/FormControls'
 import { formatDate } from '../lib/dates'
 import { GENRES } from '../lib/genres'
 import { useLookup } from '../import/lookup'
+import { LookupLine } from '../components/LookupLine'
 import { suggestGenres } from '../metadata/suggest'
 import { buildGroups, isClean, type InboxGroup } from '../lib/inbox'
 import { ImportFormatError } from '../import/libby'
@@ -43,7 +44,7 @@ function GroupRow({ group, dismissed, onResolved }: { group: InboxGroup; dismiss
   const undecided = match?.kind === 'fuzzy' && same === undefined
   // A new Work will be created unless the reader says this is the same book as an existing one.
   const makesNewWork = workId === undefined
-  const { ref, lookup } = useLookup(group.title, group.author, !dismissed && match?.kind !== 'exact')
+  const { ref, lookup, run: lookNow, mode } = useLookup(group.title, group.author, !dismissed && match?.kind !== 'exact')
   const hit = lookup.hit
   const suggested = hit ? suggestGenres(hit.subjects) : []
   const details = makesNewWork
@@ -89,13 +90,7 @@ function GroupRow({ group, dismissed, onResolved }: { group: InboxGroup; dismiss
 
         {!dismissed && makesNewWork && (
           <div className="ib-genres">
-            <p className="ib-lookup" role={lookup.state === 'failed' ? 'status' : undefined}>
-              {lookup.state === 'loading' && 'Checking Open Library…'}
-              {lookup.state === 'done' && hit && !undecided && `Found on Open Library. ${[hit.pageCount && 'page count', hit.coverUrl && 'cover'].filter(Boolean).join(' and ') ? `Its ${[hit.pageCount && 'page count', hit.coverUrl && 'cover'].filter(Boolean).join(' and ')} ${[hit.pageCount, hit.coverUrl].filter(Boolean).length > 1 ? 'are' : 'is'} added when you save.` : ''}`}
-              {lookup.state === 'done' && hit && undecided && 'Found on Open Library. Answer the question above to use it.'}
-              {lookup.state === 'done' && !hit && 'No sure match on Open Library, so nothing is suggested.'}
-              {lookup.state === 'failed' && 'Could not reach Open Library. You can set genres later.'}
-            </p>
+            <LookupLine lookup={lookup} mode={mode} run={lookNow} undecided={undecided} saves={[hit?.pageCount && 'page count', hit?.coverUrl && 'cover'].filter(Boolean).join(' and ') && `${[hit?.pageCount && 'page count', hit?.coverUrl && 'cover'].filter(Boolean).join(' and ')} ${[hit?.pageCount, hit?.coverUrl].filter(Boolean).length > 1 ? 'are' : 'is'}`} />
             <button type="button" className="btn-link" aria-expanded={showGenres} onClick={() => setShowGenres(!showGenres)}>
               {genres.length ? `Genres: ${genres.map((g) => GENRES.find((x) => x.id === g)?.label).join(', ')}` : suggested.length ? `Set genres (${suggested.length} suggested)` : 'Set genres'}
             </button>
