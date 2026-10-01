@@ -1,4 +1,5 @@
 import type { Loan, Reading, Work } from '../types'
+import { noFacets, readingFacetsOk, workFacetsOk, type Facets } from './filter'
 import type { YearFilter } from './stats'
 
 export interface LoanStats {
@@ -29,7 +30,15 @@ export interface LoanStats {
  * Loans are counted as Loans, not Readings: a borrow is evidence of borrowing. A Reading
  * is "borrowed" only when a Loan is tied to it; no Loan recorded does not mean owned.
  */
-export function computeLoanStats(loans: Loan[], readings: Reading[], works: Work[], filter: YearFilter): LoanStats {
+export function computeLoanStats(allLoans: Loan[], allReadings: Reading[], allWorks: Work[], filter: YearFilter, facets: Facets = noFacets): LoanStats {
+  // Genre and Tag describe the book, so they narrow Loans. Rating and Format describe a
+  // Reading, so they only narrow the borrowed-vs-no-loan split.
+  const works = allWorks.filter((w) => workFacetsOk(w, facets))
+  const ids = new Set(works.map((w) => w.id))
+  const loans = allLoans.filter((l) => ids.has(l.workId))
+  const readings = allReadings
+    .filter((r) => ids.has(r.workId))
+    .filter((r) => readingFacetsOk(r, facets))
   const years = [...new Set(loans.map((l) => l.borrowed?.y).filter((y): y is number => y !== undefined))].sort((a, b) => b - a)
   const inYear = (l: Loan) => filter === 'all' || l.borrowed?.y === filter
   const shown = loans.filter(inYear)

@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react'
 import { GENRES, NO_GENRE_INK, genre } from '../lib/genres'
+import { defaultQuery, noFacets, type Facets, type LibraryQuery } from '../lib/filter'
 import { computeLoanStats } from '../lib/loanStats'
 import { computeStats, type Key, type YearFilter } from '../lib/stats'
 import { useReadingData } from '../storage'
-import type { Format } from '../types'
+import type { Format, GenreId } from '../types'
 
 const inkOf = (k: Key) => (k === 'none' ? NO_GENRE_INK : genre(k).ink)
 const labelOf = (k: Key) => (k === 'none' ? 'No genre' : genre(k).label)
@@ -20,15 +21,24 @@ function Spines({ books, cell }: { books: Key[]; cell: number }) {
   )
 }
 
-export function Stats() {
+/** What a tap on a chart selected: shown in a fixed strip, with the way into the books behind it. */
+interface Selection { id: string; label: string; count: number; patch: Partial<LibraryQuery> }
+
+const RATING_CHOICES = Array.from({ length: 10 }, (_, i) => 5 - i / 2)
+
+export function Stats({ onOpenLibrary }: { onOpenLibrary: (q: LibraryQuery) => void }) {
   const data = useReadingData()
   const [year, setYear] = useState<YearFilter>('all')
-  const s = useMemo(() => (data ? computeStats(data.readings, data.works, year) : undefined), [data, year])
-
-  const ls = useMemo(() => (data ? computeLoanStats(data.loans, data.readings, data.works, year) : undefined), [data, year])
+  const [facets, setFacets] = useState<Facets>(noFacets)
+  const [sel, setSel] = useState<Selection | undefined>()
+  const s = useMemo(() => (data ? computeStats(data.readings, data.works, year, facets) : undefined), [data, year, facets])
+  const ls = useMemo(() => (data ? computeLoanStats(data.loans, data.readings, data.works, year, facets) : undefined), [data, year, facets])
+  const tags = useMemo(() => [...new Set((data?.works ?? []).flatMap((w) => w.tags))].sort(), [data])
+  const facetsOn = JSON.stringify(facets) !== JSON.stringify(noFacets)
+  const setFacet = <K extends keyof Facets>(k: K, v: Facets[K]) => { setFacets((f) => ({ ...f, [k]: v })); setSel(undefined) }
 
   if (!s || !ls) return <main className="library stats"><div className="lib-head"><h1>Stats</h1></div><p className="state" role="status">Counting your books…</p></main>
-  if (s.years.length === 0 && s.unknownDate === 0 && s.dnfCount === 0) {
+  if (!facetsOn && s.years.length === 0 && s.unknownDate === 0 && s.dnfCount === 0) {
     return (
       <main className="library stats">
         <div className="lib-head"><h1>Stats</h1></div>
@@ -36,6 +46,11 @@ export function Stats() {
       </main>
     )
   }
+
+  /** The Library query that lists the books behind a bar: this screen's facets and year, then the bar's own. */
+  const open = (patch: Partial<LibraryQuery>) => onOpenLibrary({ ...defaultQuery, ...facets, status: 'finished', year: year === 'all' ? 'any' : year, ...patch })
+  const pick = (x: Selection) => { setSel(sel?.id === x.id ? undefined : x) }
+  const on = (id: string) => sel?.id === id ? true : undefined
 
   const maxYear = Math.max(1, ...s.perYear.map((y) => y.books.length), s.unknownDateBooks.length)
   const yearCell = Math.max(4, Math.min(16, Math.floor(200 / maxYear)))
@@ -48,50 +63,89 @@ export function Stats() {
   const hasNone = s.perYear.some((y) => y.books.includes('none')) || s.unknownDateBooks.includes('none')
   const scope = year === 'all' ? 'across all years' : `in ${year}`
   const excluded = year !== 'all' && s.unknownDate > 0
+  const nothing = s.finishedCount === 0 && s.dnfCount === 0 && s.unknownDate === 0
 
   return (
     <main className="library stats">
       <div className="lib-head"><h1>Stats</h1></div>
 
       <div className="shelf-tabs" role="group" aria-label="Year">
-        <button type="button" className="shelf-tab" aria-pressed={year === 'all'} onClick={() => setYear('all')}>All years</button>
+        <button type="button" className="shelf-tab" aria-pressed={year === 'all'} onClick={() => { setYear('all'); setSel(undefined) }}>All years</button>
         {s.years.map((y) => (
-          <button key={y} type="button" className="shelf-tab" aria-pressed={year === y} onClick={() => setYear(y)}>{y}</button>
+          <button key={y} type="button" className="shelf-tab" aria-pressed={year === y} onClick={() => { setYear(y); setSel(undefined) }}>{y}</button>
         ))}
+      </div>
+
+      <div className="tools st-filters">
+        <label className="select">
+          <span className="sr-only">Genre</span>
+          <select value={facets.genre} onChange={(e) => setFacet('genre', e.target.value as GenreId | 'any')}>
+            <option value="any">All genres</option>
+            {GENRES.map((g) => <option key={g.id} value={g.id}>{g.label}</option>)}
+          </select>
+        </label>
+        <label className="select">
+          <span className="sr-only">Tag</span>
+          <select value={facets.tag} onChange={(e) => setFacet('tag', e.target.value)}>
+            <option value="any">All tags</option>
+            {tags.map((t) => <option key={t} value={t}>{t}</option>)}
+          </select>
+        </label>
+        <label className="select">
+          <span className="sr-only">Rating</span>
+          <select value={String(facets.rating)} onChange={(e) => setFacet('rating', e.target.value === 'any' || e.target.value === 'unrated' ? e.target.value : Number(e.target.value))}>
+            <option value="any">Any rating</option>
+            {RATING_CHOICES.map((r) => <option key={r} value={r}>{r} {r === 1 ? 'star' : 'stars'}</option>)}
+            <option value="unrated">Unrated</option>
+          </select>
+        </label>
+        <label className="select">
+          <span className="sr-only">Format</span>
+          <select value={facets.format} onChange={(e) => setFacet('format', e.target.value as Format | 'any')}>
+            <option value="any">All formats</option>
+            {(Object.keys(FORMAT_LABEL) as Format[]).map((f) => <option key={f} value={f}>{FORMAT_LABEL[f]}</option>)}
+          </select>
+        </label>
+        {facetsOn && <button type="button" className="btn-quiet" onClick={() => { setFacets(noFacets); setSel(undefined) }}>Clear filters</button>}
       </div>
 
       <p className="st-summary">
         {s.finishedCount} {s.finishedCount === 1 ? 'book' : 'books'} finished {scope}
-        {s.dnfCount > 0 && <> · {s.dnfCount} did not finish</>}
+        {s.dnfCount > 0 && <> · <button type="button" className="btn-link inline" onClick={() => open({ status: 'dnf' })}>{s.dnfCount} did not finish</button></>}
       </p>
-      {excluded && <p className="hint">{s.unknownDate} finished {s.unknownDate === 1 ? 'reading has' : 'readings have'} no date and {s.unknownDate === 1 ? 'is' : 'are'} left out of this year.</p>}
+      {excluded && <p className="hint">{s.unknownDate} finished {s.unknownDate === 1 ? 'reading has' : 'readings have'} no date and {s.unknownDate === 1 ? 'is' : 'are'} left out of this year. <button type="button" className="btn-link inline" onClick={() => open({ year: 'unknown' })}>Show {s.unknownDate === 1 ? 'it' : 'them'}</button></p>}
 
+      <div className="st-strip" role="status" aria-live="polite">
+        {sel ? (
+          <>
+            <span><strong>{sel.label}</strong> · {sel.count} {sel.count === 1 ? 'reading' : 'readings'}</span>
+            <button type="button" className="btn-quiet" onClick={() => open(sel.patch)}>Open in Library</button>
+          </>
+        ) : <span className="hint">Tap a bar to see its books.</span>}
+      </div>
+
+      {nothing ? (
+        <div className="state"><p className="state-title">Nothing matches these filters</p><p>Try a different genre, tag, rating or format.</p></div>
+      ) : (
       <div className="st-grid">
         <section className="st-card st-wide" aria-labelledby="st-years">
           <h2 id="st-years" className="set-title">Books per year</h2>
-          <div className="st-cols" aria-hidden="true">
+          <div className="st-cols">
             {s.perYear.map((y) => (
-              <button key={y.year} type="button" className="st-col" aria-pressed={year === y.year} tabIndex={-1} onClick={() => setYear(year === y.year ? 'all' : y.year)}>
+              <button key={y.year} type="button" className="st-col" aria-pressed={on(`y${y.year}`) ?? false} aria-label={`${y.year}: ${y.books.length} ${y.books.length === 1 ? 'book' : 'books'}`} onClick={() => pick({ id: `y${y.year}`, label: `Finished in ${y.year}`, count: y.books.length, patch: { year: y.year } })}>
                 <span className="st-n">{y.books.length}</span>
                 <Spines books={y.books} cell={yearCell} />
                 <span className="st-l">{y.year}</span>
               </button>
             ))}
             {s.unknownDateBooks.length > 0 && (
-              <div className="st-col unknown">
+              <button type="button" className="st-col unknown" aria-pressed={on('yu') ?? false} aria-label={`Date unknown: ${s.unknownDateBooks.length} ${s.unknownDateBooks.length === 1 ? 'book' : 'books'}`} onClick={() => pick({ id: 'yu', label: 'Finished, date unknown', count: s.unknownDateBooks.length, patch: { year: 'unknown' } })}>
                 <span className="st-n">{s.unknownDateBooks.length}</span>
                 <Spines books={s.unknownDateBooks} cell={yearCell} />
                 <span className="st-l">Date unknown</span>
-              </div>
+              </button>
             )}
           </div>
-          <table className="sr-only">
-            <caption>Books finished per year</caption>
-            <tbody>
-              {s.perYear.map((y) => <tr key={y.year}><th>{y.year}</th><td>{y.books.length}</td></tr>)}
-              {s.unknownDateBooks.length > 0 && <tr><th>Date unknown</th><td>{s.unknownDateBooks.length}</td></tr>}
-            </tbody>
-          </table>
           <ul className="st-legend" aria-label="Genre colours">
             {[...usedGenres.map((g) => ({ k: g.id as Key })), ...(hasNone ? [{ k: 'none' as Key }] : [])].map(({ k }) => (
               <li key={k}><span className="spine" style={{ background: inkOf(k) }} />{labelOf(k)}</li>
@@ -103,19 +157,21 @@ export function Stats() {
         {s.monthYear !== undefined && (
           <section className="st-card st-wide" aria-labelledby="st-months">
             <h2 id="st-months" className="set-title">Books per month, {s.monthYear}</h2>
-            <div className="st-cols months" aria-hidden="true">
-              {s.perMonth.map((m, i) => (
-                <div key={i} className="st-col">
-                  <span className="st-n">{m.length || ''}</span>
+            <div className="st-cols months">
+              {s.perMonth.map((m, i) => m.length === 0 ? (
+                <div key={i} className="st-col" aria-label={`${MONTHS[i]}: none`}>
+                  <span className="st-n" />
                   <Spines books={m} cell={monthCell} />
                   <span className="st-l">{MONTHS[i]}</span>
                 </div>
+              ) : (
+                <button key={i} type="button" className="st-col" aria-pressed={on(`m${i}`) ?? false} aria-label={`${MONTHS[i]} ${s.monthYear}: ${m.length} ${m.length === 1 ? 'book' : 'books'}`} onClick={() => pick({ id: `m${i}`, label: `Finished ${MONTHS[i]} ${s.monthYear}`, count: m.length, patch: { year: s.monthYear, month: i + 1 } })}>
+                  <span className="st-n">{m.length}</span>
+                  <Spines books={m} cell={monthCell} />
+                  <span className="st-l">{MONTHS[i]}</span>
+                </button>
               ))}
             </div>
-            <table className="sr-only">
-              <caption>Books finished per month in {s.monthYear}</caption>
-              <tbody>{s.perMonth.map((m, i) => <tr key={i}><th>{MONTHS[i]}</th><td>{m.length}</td></tr>)}</tbody>
-            </table>
             <p className="hint">Spines are coloured by each book's first genre, as in the yearly chart.</p>
             {s.monthUnknown > 0 && <p className="hint">{s.monthUnknown} finished in {s.monthYear} {s.monthUnknown === 1 ? 'is' : 'are'} recorded only to the year, so {s.monthUnknown === 1 ? 'it is' : 'they are'} not in a month.</p>}
           </section>
@@ -124,33 +180,47 @@ export function Stats() {
         <section className="st-card" aria-labelledby="st-genres">
           <h2 id="st-genres" className="set-title">Genres</h2>
           <ul className="st-bars">
-            {s.genres.map((g) => (
-              <li key={g.key}>
-                <span className="st-bl">{labelOf(g.key)}</span>
-                <span className="st-track"><span className="st-fill" style={{ width: `${(g.count / maxGenre) * 100}%`, background: inkOf(g.key) }} /></span>
-                <span className="st-bn">{g.count}</span>
-              </li>
-            ))}
+            {s.genres.map((g) => {
+              const row = (
+                <>
+                  <span className="st-bl">{labelOf(g.key)}</span>
+                  <span className="st-track"><span className="st-fill" style={{ width: `${(g.count / maxGenre) * 100}%`, background: inkOf(g.key) }} /></span>
+                  <span className="st-bn">{g.count}</span>
+                </>
+              )
+              return (
+                <li key={g.key} className={on(`g${g.key}`) ? 'on' : ''}>
+                  {g.key === 'none' ? row : (
+                    <button type="button" className="st-row" aria-pressed={on(`g${g.key}`) ?? false} onClick={() => pick({ id: `g${g.key}`, label: labelOf(g.key), count: g.count, patch: { genre: g.key as GenreId } })}>{row}</button>
+                  )}
+                </li>
+              )
+            })}
           </ul>
           <p className="hint">A book with several genres counts once in each.</p>
         </section>
 
         <section className="st-card" aria-labelledby="st-ratings">
           <h2 id="st-ratings" className="set-title">Ratings</h2>
-          <div className="st-cols ratings" aria-hidden="true">
-            {s.ratings.map((r) => (
-              <div key={r.value} className="st-col">
-                <span className="st-n">{r.count || ''}</span>
-                <span className="st-rbar" style={{ height: `${(r.count / maxRating) * 120}px` }} />
+          <div className="st-cols ratings">
+            {s.ratings.map((r) => r.count === 0 ? (
+              <div key={r.value} className="st-col" aria-label={`${r.value} stars: none`}>
+                <span className="st-n" />
+                <span className="st-rbar" style={{ height: '2px' }} />
                 <span className="st-l">{halfLabel(r.value)}</span>
               </div>
+            ) : (
+              <button key={r.value} type="button" className="st-col" aria-pressed={on(`r${r.value}`) ?? false} aria-label={`${r.value} stars: ${r.count} ${r.count === 1 ? 'reading' : 'readings'}`} onClick={() => pick({ id: `r${r.value}`, label: `Rated ${r.value}`, count: r.count, patch: { rating: r.value } })}>
+                <span className="st-n">{r.count}</span>
+                <span className="st-rbar" style={{ height: `${(r.count / maxRating) * 120}px` }} />
+                <span className="st-l">{halfLabel(r.value)}</span>
+              </button>
             ))}
           </div>
-          <table className="sr-only">
-            <caption>Ratings, in half-star steps</caption>
-            <tbody>{s.ratings.map((r) => <tr key={r.value}><th>{r.value} stars</th><td>{r.count}</td></tr>)}</tbody>
-          </table>
-          <p className="hint">{s.unrated} unrated {s.unrated === 1 ? 'reading is' : 'readings are'} not counted above. Unrated is not a low score.</p>
+          <p className="hint">
+            {s.unrated} unrated {s.unrated === 1 ? 'reading is' : 'readings are'} not counted above. Unrated is not a low score.
+            {s.unrated > 0 && <> <button type="button" className="btn-link inline" onClick={() => open({ rating: 'unrated' })}>Show {s.unrated === 1 ? 'it' : 'them'}</button></>}
+          </p>
         </section>
 
         <section className="st-card" aria-labelledby="st-formats">
@@ -164,7 +234,7 @@ export function Stats() {
                   <span className="st-track">
                     <span className="st-len" style={{ width: `${(total / maxFormat) * 100}%` }}>
                       {(Object.keys(FORMAT_LABEL) as Format[]).map((k) => f.counts[k] > 0 && (
-                        <span key={k} className={`st-seg fmt-${k}`} style={{ flexGrow: f.counts[k] }} title={`${FORMAT_LABEL[k]} ${f.counts[k]}`}>{f.counts[k]}</span>
+                        <button key={k} type="button" className={`st-seg fmt-${k}`} style={{ flexGrow: f.counts[k] }} aria-pressed={on(`f${f.label}${k}`) ?? false} aria-label={`${f.label}, ${FORMAT_LABEL[k]}: ${f.counts[k]}`} onClick={() => pick({ id: `f${f.label}${k}`, label: `${FORMAT_LABEL[k]}, ${f.year ?? 'date unknown'}`, count: f.counts[k], patch: { format: k, year: f.year ?? 'unknown' } })}>{f.counts[k]}</button>
                       ))}
                     </span>
                   </span>
@@ -182,16 +252,24 @@ export function Stats() {
           <h2 id="st-authors" className="set-title">Top authors</h2>
           {s.authors.length === 0 ? <p className="hint">No authors to rank {scope}.</p> : (
             <ol className="st-rank">
-              {s.authors.map((a, i) => <li key={a.author}><span className="st-pos">{i + 1}</span><span className="st-bl">{a.author}</span><span className="st-bn">{a.count}</span></li>)}
+              {s.authors.map((a, i) => (
+                <li key={a.author} className={on(`a${a.author}`) ? 'on' : ''}>
+                  <button type="button" className="st-row" aria-pressed={on(`a${a.author}`) ?? false} onClick={() => pick({ id: `a${a.author}`, label: a.author, count: a.count, patch: { text: a.author } })}>
+                    <span className="st-pos">{i + 1}</span><span className="st-bl">{a.author}</span><span className="st-bn">{a.count}</span>
+                  </button>
+                </li>
+              ))}
             </ol>
           )}
         </section>
       </div>
+      )}
 
       {(ls.loanCount > 0 || ls.undated > 0 || ls.notFinished.length > 0 || ls.borrowed > 0) && (
         <>
           <h2 className="set-title st-section">Library loans</h2>
           <p className="st-summary">{ls.loanCount} {ls.loanCount === 1 ? 'loan' : 'loans'} {scope}</p>
+          {(facets.rating !== 'any' || facets.format !== 'any') && <p className="hint">Loans are narrowed by genre and tag only. Rating and format apply to the borrowed readings count.</p>}
           {ls.undated > 0 && <p className="hint">{ls.undated} {ls.undated === 1 ? 'loan has' : 'loans have'} no borrow date and {ls.undated === 1 ? 'is' : 'are'} left out of the year and month views.</p>}
           <div className="st-grid">
             <section className="st-card st-wide" aria-labelledby="st-loans">

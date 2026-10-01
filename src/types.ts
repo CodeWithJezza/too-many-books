@@ -62,6 +62,8 @@ export interface WorkSummary extends Work {
   id: number
   latest?: Reading
   readingCount: number
+  /** Every Reading, when the list query supplies them; filters match against these. */
+  readings?: Reading[]
 }
 
 export interface WorkDetail extends WorkSummary {

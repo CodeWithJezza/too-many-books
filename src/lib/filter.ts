@@ -1,17 +1,53 @@
-import type { GenreId, WorkSummary } from '../types'
+import type { Format, GenreId, Reading, ReadingStatus, Work, WorkSummary } from '../types'
 import { dateKey } from './dates'
 
 export type ShelfFilter = 'all' | 'reading' | 'read' | 'want' | 'dnf'
 export type SortKey = 'recent' | 'title' | 'author' | 'rating'
 
-export interface LibraryQuery {
-  text: string
-  shelf: ShelfFilter
+/**
+ * Facets shared by Library and Stats (ADR 0008). Genre and Tag describe the Work; Rating
+ * and Format describe a Reading. 'unrated' is its own choice, never a low score.
+ */
+export interface Facets {
   genre: GenreId | 'any'
-  sort: SortKey
+  tag: string | 'any'
+  rating: number | 'unrated' | 'any'
+  format: Format | 'any'
 }
 
-export const defaultQuery: LibraryQuery = { text: '', shelf: 'all', genre: 'any', sort: 'recent' }
+export const noFacets: Facets = { genre: 'any', tag: 'any', rating: 'any', format: 'any' }
+
+export const workFacetsOk = (w: Pick<Work, 'genres' | 'tags'>, f: Facets): boolean =>
+  (f.genre === 'any' || w.genres.includes(f.genre)) && (f.tag === 'any' || w.tags.includes(f.tag))
+
+export const readingFacetsOk = (r: Pick<Reading, 'rating' | 'format'>, f: Facets): boolean =>
+  (f.rating === 'any' || (f.rating === 'unrated' ? r.rating === undefined : r.rating === f.rating)) && (f.format === 'any' || r.format === f.format)
+
+/** Library-only Reading facets: which read-through, and when it ended. 'unknown' year means no Finish date. */
+export interface LibraryQuery extends Facets {
+  text: string
+  shelf: ShelfFilter
+  sort: SortKey
+  status: ReadingStatus | 'any'
+  year: number | 'unknown' | 'any'
+  month: number | 'any'
+}
+
+export const defaultQuery: LibraryQuery = { ...noFacets, text: '', shelf: 'all', sort: 'recent', status: 'any', year: 'any', month: 'any' }
+
+const readingOk = (r: Reading, q: LibraryQuery): boolean =>
+  readingFacetsOk(r, q) &&
+  (q.status === 'any' || r.status === q.status) &&
+  (q.year === 'any' || (q.year === 'unknown' ? !r.finish : r.finish?.y === q.year)) &&
+  (q.month === 'any' || r.finish?.m === q.month)
+
+/** True when any Reading-level facet is set, so a Work needs a Reading that satisfies them all together. */
+export const readingFiltered = (q: LibraryQuery): boolean =>
+  q.rating !== 'any' || q.format !== 'any' || q.status !== 'any' || q.year !== 'any' || q.month !== 'any'
+
+/** True when anything differs from the unfiltered Library. */
+export const isFiltered = (q: LibraryQuery): boolean =>
+  q.text !== '' || q.shelf !== 'all' || q.genre !== 'any' || q.tag !== 'any' || readingFiltered(q)
 
 export function onShelf(w: WorkSummary, shelf: ShelfFilter): boolean {
   switch (shelf) {
@@ -37,7 +73,8 @@ export function applyQuery(works: WorkSummary[], q: LibraryQuery): WorkSummary[]
   const out = works.filter(
     (w) =>
       onShelf(w, q.shelf) &&
-      (q.genre === 'any' || w.genres.includes(q.genre)) &&
+      workFacetsOk(w, q) &&
+      (!readingFiltered(q) || (w.readings ?? (w.latest ? [w.latest] : [])).some((r) => readingOk(r, q))) &&
       (!needle || norm(w.title).includes(needle) || norm(w.author).includes(needle)),
   )
   const cmp: Record<SortKey, (a: WorkSummary, b: WorkSummary) => number> = {

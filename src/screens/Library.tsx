@@ -4,10 +4,10 @@ import { Icon } from '../components/Icon'
 import { Jacket } from '../components/Jacket'
 import { Stars } from '../components/Stars'
 import { formatDate } from '../lib/dates'
-import { applyQuery, defaultQuery, onShelf, type LibraryQuery, type ShelfFilter, type SortKey } from '../lib/filter'
+import { applyQuery, defaultQuery, isFiltered, onShelf, type LibraryQuery, type ShelfFilter, type SortKey } from '../lib/filter'
 import { GENRES, labelOf } from '../lib/genres'
 import { clearSampleData } from '../storage'
-import type { GenreId, WorkSummary } from '../types'
+import type { Format, GenreId, WorkSummary } from '../types'
 
 const SHELVES: { id: ShelfFilter; label: string }[] = [
   { id: 'all', label: 'All' },
@@ -32,8 +32,26 @@ function caption(w: WorkSummary): string {
   return `${g} · ${formatDate(l.finish)}`
 }
 
-export function Library({ works, selectedId, onSelect, sample, onOpenSettings }: {
+const FORMAT_LABEL: Record<Format, string> = { ebook: 'Ebook', audiobook: 'Audiobook', print: 'Print' }
+const RATING_CHOICES = Array.from({ length: 10 }, (_, i) => 5 - i / 2)
+const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+const STATUS_LABEL = { reading: 'Reading now', finished: 'Finished', dnf: 'Did not finish' } as const
+
+/** The active filters beyond the shelf tabs and sort, as removable chips, so a filter is never hidden. */
+function activeChips(q: LibraryQuery): { key: string; label: string; clear: Partial<LibraryQuery> }[] {
+  const out: { key: string; label: string; clear: Partial<LibraryQuery> }[] = []
+  if (q.status !== 'any') out.push({ key: 'status', label: STATUS_LABEL[q.status], clear: { status: 'any' } })
+  if (q.year !== 'any') out.push({ key: 'year', label: q.year === 'unknown' ? 'Date unknown' : q.month !== 'any' ? `${MONTH_NAMES[q.month - 1]} ${q.year}` : String(q.year), clear: { year: 'any', month: 'any' } })
+  if (q.rating !== 'any') out.push({ key: 'rating', label: q.rating === 'unrated' ? 'Unrated' : `Rated ${q.rating}`, clear: { rating: 'any' } })
+  if (q.format !== 'any') out.push({ key: 'format', label: FORMAT_LABEL[q.format], clear: { format: 'any' } })
+  if (q.tag !== 'any') out.push({ key: 'tag', label: `Tag: ${q.tag}`, clear: { tag: 'any' } })
+  return out
+}
+
+export function Library({ works, query: q, onQuery: setQ, selectedId, onSelect, sample, onOpenSettings }: {
   works: WorkSummary[] | undefined
+  query: LibraryQuery
+  onQuery: (q: LibraryQuery) => void
   selectedId?: number
   onSelect: (id: number) => void
   sample: boolean
@@ -42,12 +60,15 @@ export function Library({ works, selectedId, onSelect, sample, onOpenSettings }:
   useSyncExternalStore(subscribeChanges, changesSinceBackup)
   useSyncExternalStore(subscribeChanges, () => lastBackupAt() ?? 0)
   const nudge = works !== undefined && shouldPromptBackup(works.some((w) => !w.synthetic))
-  const [q, setQ] = useState<LibraryQuery>(defaultQuery)
   const [confirmClear, setConfirmClear] = useState(false)
-  const set = <K extends keyof LibraryQuery>(k: K, v: LibraryQuery[K]) => setQ((p) => ({ ...p, [k]: v }))
+  const set = <K extends keyof LibraryQuery>(k: K, v: LibraryQuery[K]) => setQ({ ...q, [k]: v })
 
   const shown = useMemo(() => (works ? applyQuery(works, q) : []), [works, q])
-  const filtered = q.text !== '' || q.shelf !== 'all' || q.genre !== 'any'
+  const filtered = isFiltered(q)
+  const chips = activeChips(q)
+  const tags = useMemo(() => [...new Set((works ?? []).flatMap((w) => w.tags))].sort(), [works])
+  const years = useMemo(() => [...new Set((works ?? []).flatMap((w) => (w.readings ?? []).map((r) => r.finish?.y)).filter((y): y is number => y !== undefined))].sort((a, b) => b - a), [works])
+  const [moreOpen, setMoreOpen] = useState(false)
   const counts = useMemo(() => {
     const c = {} as Record<ShelfFilter, number>
     for (const s of SHELVES) c[s.id] = works?.filter((w) => onShelf(w, s.id)).length ?? 0
@@ -92,6 +113,7 @@ export function Library({ works, selectedId, onSelect, sample, onOpenSettings }:
             {GENRES.map((g) => <option key={g.id} value={g.id}>{g.label}</option>)}
           </select>
         </label>
+        <button type="button" className="btn-quiet" aria-expanded={moreOpen || chips.length > 0} onClick={() => setMoreOpen(!moreOpen)}>Filters{chips.length > 0 && ` · ${chips.length}`}</button>
         <label className="select">
           <span className="sr-only">Sort by</span>
           <select value={q.sort} onChange={(e) => set('sort', e.target.value as SortKey)}>
@@ -99,6 +121,48 @@ export function Library({ works, selectedId, onSelect, sample, onOpenSettings }:
           </select>
         </label>
       </div>
+
+      {(moreOpen || chips.length > 0) && (
+        <div className="tools lib-more">
+          <label className="select">
+            <span className="sr-only">Tag</span>
+            <select value={q.tag} onChange={(e) => set('tag', e.target.value)}>
+              <option value="any">All tags</option>
+              {tags.map((t) => <option key={t} value={t}>{t}</option>)}
+            </select>
+          </label>
+          <label className="select">
+            <span className="sr-only">Rating</span>
+            <select value={String(q.rating)} onChange={(e) => set('rating', e.target.value === 'any' || e.target.value === 'unrated' ? e.target.value : Number(e.target.value))}>
+              <option value="any">Any rating</option>
+              {RATING_CHOICES.map((r) => <option key={r} value={r}>{r} {r === 1 ? 'star' : 'stars'}</option>)}
+              <option value="unrated">Unrated</option>
+            </select>
+          </label>
+          <label className="select">
+            <span className="sr-only">Format</span>
+            <select value={q.format} onChange={(e) => set('format', e.target.value as Format | 'any')}>
+              <option value="any">All formats</option>
+              {(Object.keys(FORMAT_LABEL) as Format[]).map((f) => <option key={f} value={f}>{FORMAT_LABEL[f]}</option>)}
+            </select>
+          </label>
+          <label className="select">
+            <span className="sr-only">Finished in</span>
+            <select value={String(q.year)} onChange={(e) => setQ({ ...q, month: 'any', year: e.target.value === 'any' || e.target.value === 'unknown' ? e.target.value : Number(e.target.value) })}>
+              <option value="any">Any year</option>
+              {years.map((y) => <option key={y} value={y}>{y}</option>)}
+              <option value="unknown">Date unknown</option>
+            </select>
+          </label>
+        </div>
+      )}
+      {chips.length > 0 && (
+        <ul className="chip-filters" aria-label="Active filters">
+          {chips.map((c) => (
+            <li key={c.key}>{c.label}<button type="button" aria-label={`Remove filter ${c.label}`} onClick={() => setQ({ ...q, ...c.clear })}><Icon name="close" size={16} /></button></li>
+          ))}
+        </ul>
+      )}
 
       <div className="shelf-tabs" role="group" aria-label="Shelf">
         {SHELVES.map((s) => (
@@ -113,7 +177,7 @@ export function Library({ works, selectedId, onSelect, sample, onOpenSettings }:
       ) : shown.length === 0 ? (
         <div className="state">
           <p className="state-title">{works.length === 0 ? 'No books yet' : 'Nothing matches'}</p>
-          <p>{works.length === 0 ? 'Add a book or import your Libby history to fill the shelves.' : 'Try a different shelf, genre or search.'}</p>
+          <p>{works.length === 0 ? 'Add a book or import your Libby history to fill the shelves.' : 'Try a different shelf, genre, filter or search.'}</p>
           {filtered && <button type="button" className="btn-quiet" onClick={() => setQ(defaultQuery)}>Clear filters</button>}
         </div>
       ) : (

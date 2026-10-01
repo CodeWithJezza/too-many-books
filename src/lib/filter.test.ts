@@ -31,3 +31,33 @@ describe('applyQuery', () => {
     expect(applyQuery(works, { ...defaultQuery, text: 'GAMMA' }).map((x) => x.id)).toEqual([3])
   })
 })
+
+describe('Reading-level facets (ADR 0008)', () => {
+  const rs = (workId: number, ...r: Partial<import('../types').Reading>[]) => r.map((x) => ({ workId, status: 'finished' as const, format: 'ebook' as const, ...x }))
+  const works = [
+    // An ebook rated 5 and, separately, an unrated audiobook.
+    w(1, 'One', 'A', { tags: ['cozy'], readings: rs(1, { rating: 5, finish: { y: 2023, m: 4 } }, { format: 'audiobook', finish: { y: 2025 } }) }),
+    w(2, 'Two', 'B', { readings: rs(2, { rating: 5, format: 'audiobook', status: 'dnf', finish: { y: 2025, m: 1 } }) }),
+    w(3, 'Three', 'C', { readings: rs(3, {}) }),
+    w(4, 'Four', 'D', { shelves: ['want'] }),
+  ]
+  const ids = (q: Partial<typeof defaultQuery>) => applyQuery(works, { ...defaultQuery, sort: 'title', ...q }).map((x) => x.id)
+
+  it('needs one Reading to satisfy every Reading facet together', () => {
+    expect(ids({ format: 'audiobook', rating: 5 })).toEqual([2])
+    expect(ids({ format: 'audiobook' })).toEqual([1, 2])
+  })
+  it('matches an older Reading, not just the latest', () => {
+    expect(ids({ year: 2023 })).toEqual([1])
+  })
+  it('keeps unrated and unknown date as their own choices', () => {
+    expect(ids({ rating: 'unrated' })).toEqual([1, 3])
+    expect(ids({ year: 'unknown' })).toEqual([3])
+  })
+  it('filters by status, month and tag, and a Work with no Readings never matches a Reading facet', () => {
+    expect(ids({ status: 'dnf' })).toEqual([2])
+    expect(ids({ year: 2025, month: 1 })).toEqual([2])
+    expect(ids({ tag: 'cozy' })).toEqual([1])
+    expect(ids({ format: 'ebook' })).toEqual([1, 3])
+  })
+})

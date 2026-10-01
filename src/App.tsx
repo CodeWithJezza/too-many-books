@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { applyUpdate, dismissOffline, pwaState, subscribePwa } from './pwa'
-import { applyQuery, defaultQuery } from './lib/filter'
+import { applyQuery, defaultQuery, type LibraryQuery } from './lib/filter'
 import { Icon, type IconName } from './components/Icon'
 import { Add } from './screens/Add'
 import { EditWork } from './screens/EditWork'
@@ -38,6 +38,7 @@ export default function App() {
   const inboxCount = useMemo(() => buildGroups(pending ?? [], rawWorks).length + (grPending?.length ?? 0), [pending, rawWorks, grPending])
   const [tab, setTab] = useState<Tab>('library')
   const [selectedId, setSelectedId] = useState<number | undefined>()
+  const [query, setQuery] = useState<LibraryQuery>(defaultQuery)
   const [editId, setEditId] = useState<number | undefined>()
   const [editDirty, setEditDirty] = useState(false)
   const [leaveTo, setLeaveTo] = useState<(() => void) | undefined>()
@@ -141,13 +142,13 @@ export default function App() {
       )}
       {editId === undefined && tab === 'library' && (
         <>
-          <Library works={works} selectedId={selectedId} onSelect={setSelectedId} sample={sample} onOpenSettings={() => setTab('settings')} />
+          <Library works={works} query={query} onQuery={setQuery} selectedId={selectedId} onSelect={setSelectedId} sample={sample} onOpenSettings={() => setTab('settings')} />
           <WorkPanel id={selectedId} onClose={() => setSelectedId(undefined)} onEdit={setEditId} />
         </>
       )}
       {editId === undefined && tab === 'library' && panelOpen && <div className="scrim" onClick={() => setSelectedId(undefined)} aria-hidden="true" />}
       {editId === undefined && tab === 'inbox' && <Inbox />}
-      {editId === undefined && tab === 'stats' && <Stats />}
+      {editId === undefined && tab === 'stats' && <Stats onOpenLibrary={(q) => { setQuery(q); setSelectedId(undefined); setTab('library') }} />}
       {editId === undefined && tab === 'settings' && <Settings />}
       {editId === undefined && tab === 'add' && <Add onSaved={(id) => { setSelectedId(id); setTab('library') }} />}
       {pwa.includes('u') && (

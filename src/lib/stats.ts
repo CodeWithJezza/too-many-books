@@ -1,4 +1,5 @@
 import type { Format, GenreId, Reading, Work } from '../types'
+import { noFacets, readingFacetsOk, workFacetsOk, type Facets } from './filter'
 
 export type Key = GenreId | 'none'
 export type YearFilter = number | 'all'
@@ -33,7 +34,13 @@ export interface Stats {
 
 const FORMATS: Format[] = ['ebook', 'audiobook', 'print']
 
-export function computeStats(readings: Reading[], works: Work[], filter: YearFilter): Stats {
+/**
+ * Counts Readings under the shared facets (ADR 0008). Facets narrow the Readings first, so
+ * every chart, including the year bars and the excluded counts, describes the same subset.
+ */
+export function computeStats(allReadings: Reading[], allWorks: Work[], filter: YearFilter, facets: Facets = noFacets): Stats {
+  const works = allWorks.filter((w) => workFacetsOk(w, facets))
+  const readings = allReadings.filter((r) => readingFacetsOk(r, facets))
   const byId = new Map(works.map((w) => [w.id!, w]))
   const books = (status: Reading['status']): Book[] =>
     readings

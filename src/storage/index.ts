@@ -56,7 +56,7 @@ export function useWorks(): WorkSummary[] | undefined {
     for (const r of readings) by.set(r.workId, [...(by.get(r.workId) ?? []), r])
     return works.map((w) => {
       const rs = by.get(w.id!) ?? []
-      return { ...w, id: w.id!, latest: latestOf(rs), readingCount: rs.length }
+      return { ...w, id: w.id!, latest: latestOf(rs), readingCount: rs.length, readings: rs }
     })
   }, [])
 }
