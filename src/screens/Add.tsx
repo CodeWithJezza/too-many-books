@@ -335,7 +335,7 @@ export function Add({ onSaved, prefill }: { onSaved: (workId: number) => void; p
           <fieldset className="field">
             <legend>Series <span className="hint-inline">{prefill ? 'from the Series page' : 'suggested from the title'}</span></legend>
             <div className="genre-picks">
-              <button type="button" className="genre-pick tag-pick" aria-pressed={seriesOn} onClick={() => setSeriesOn(!seriesOn)}>{volume.name} #{volume.position}</button>
+              <button type="button" className="genre-pick tag-pick" aria-pressed={seriesOn} onClick={() => setSeriesOn(!seriesOn)}>{volume.name}</button>
             </div>
           </fieldset>
         )}

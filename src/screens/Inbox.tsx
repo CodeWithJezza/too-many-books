@@ -123,7 +123,7 @@ function GroupRow({ group, dismissed, onResolved }: { group: InboxGroup; dismiss
             </div>
             {volume && (
               <div className="genre-picks" role="group" aria-label={`Series for ${group.title}`}>
-                <button type="button" className="genre-pick sm tag-pick" aria-pressed={seriesOn} onClick={() => setSeriesOn(!seriesOn)}>Series: {volume.name} #{volume.position}<span className="sug"> · suggested</span></button>
+                <button type="button" className="genre-pick sm tag-pick" aria-pressed={seriesOn} onClick={() => setSeriesOn(!seriesOn)}>Series: {volume.name}<span className="sug"> · suggested</span></button>
               </div>
             )}
             {form && series.mode === 'ask' && series.lookup.state === 'idle' && <button type="button" className="btn-link" onClick={series.run}>Look up genres on AniList</button>}

@@ -86,7 +86,7 @@ Title box (own library, then Open Library, then manual entry) → status selecto
 
 Tracked with reasoning in `docs/open-questions.md`:
 - Reading goals (they conflict with the product principle of calm accounting, not pressure)
-- Hardcover, Jikan and Google Books as Metadata providers (researched, not adopted; AniList is used for manga and light novel genres only)
+- Hardcover, Jikan and Google Books as Metadata providers (researched, not adopted: Jikan for its small request limit and the rate limiting of the MyAnimeList site it scrapes; AniList is used for manga and light novel genres only)
 - A StoryGraph importer (deferred; see ADR 0006)
 - Sync / backend / multi-device / sharing with other people
 - A series' true length and description (no catalog supplies them reliably yet)
