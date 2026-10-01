@@ -160,7 +160,7 @@ export default function App() {
         </>
       )}
       {editId === undefined && tab === 'library' && panelOpen && <div className="scrim" onClick={() => setSelectedId(undefined)} aria-hidden="true" />}
-      {editId === undefined && tab === 'inbox' && <Inbox />}
+      {editId === undefined && tab === 'inbox' && <Inbox onOpenStats={() => setTab('stats')} />}
       {editId === undefined && tab === 'stats' && <Stats onOpenLibrary={(q) => { setQuery(q); setSelectedId(undefined); setTab('library') }} />}
       {editId === undefined && tab === 'settings' && <Settings />}
       {editId === undefined && tab === 'add' && <Add prefill={addPrefill} onSaved={(id) => { setAddPrefill(undefined); setSelectedId(id); setTab('library') }} />}

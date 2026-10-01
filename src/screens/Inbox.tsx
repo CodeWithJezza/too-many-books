@@ -34,6 +34,8 @@ const FORMS = [{ tag: 'light novel', label: 'Light novel' }, { tag: 'manga', lab
 
 /** Rows drawn at a time. Hundreds of rows at once, each with a cover and a lookup, made the Inbox stall on open. */
 const PAGE = 25
+/** Actions that can be walked back after the fact. */
+const UNDO_DEPTH = 10
 
 /** Draws the next page of rows when it scrolls near, and offers a button when it cannot tell. */
 function More({ left, onMore }: { left: number; onMore: () => void }) {
@@ -52,7 +54,7 @@ function More({ left, onMore }: { left: number; onMore: () => void }) {
   )
 }
 
-function GroupRow({ group, dismissed, onResolved }: { group: InboxGroup; dismissed: boolean; onResolved: (r: ResolveReceipt, what: string) => void }) {
+function GroupRow({ group, dismissed, onResolved, onDismissed }: { group: InboxGroup; dismissed: boolean; onResolved: (r: ResolveReceipt, what: string) => void; onDismissed: (title: string, undo: () => Promise<void>) => void }) {
   const newest = group.records[0]
   const [format, setFormat] = useState<Format>(newest.format ?? 'ebook')
   const [same, setSame] = useState<boolean | undefined>(group.match?.kind === 'fuzzy' ? undefined : true)
@@ -184,7 +186,7 @@ function GroupRow({ group, dismissed, onResolved }: { group: InboxGroup; dismiss
               {match && (
                 <button type="button" className="btn-quiet" disabled={busy || undecided || same === false} onClick={() => resolve({ recordIds: ids, resolution: { kind: 'link' }, workId }, 'linked')}>Just link loans</button>
               )}
-              <button type="button" className="btn-link" disabled={busy} onClick={() => run(() => setDismissed(ids, true))}>Dismiss</button>
+              <button type="button" className="btn-link" disabled={busy} onClick={() => run(async () => { await setDismissed(ids, true); onDismissed(group.title, () => setDismissed(ids, false)) })}>Dismiss</button>
             </div>
           </>
         )}
@@ -194,7 +196,7 @@ function GroupRow({ group, dismissed, onResolved }: { group: InboxGroup; dismiss
   )
 }
 
-export function Inbox() {
+export function Inbox({ onOpenStats }: { onOpenStats: () => void }) {
   const pending = useRecords('pending')
   const dismissed = useRecords('dismissed')
   const works = useWorksRaw()
@@ -206,8 +208,11 @@ export function Inbox() {
   const [summary, setSummary] = useState<ImportSummary | undefined>()
   const [error, setError] = useState<string | undefined>()
   const [note, setNote] = useState<string | undefined>()
+  const [sorted, setSorted] = useState(0)
   const [importing, setImporting] = useState(false)
-  const [undo, setUndo] = useState<{ text: string; run: () => Promise<void> } | undefined>()
+  // The last few actions, newest first, so a run of mis-taps can be walked back one at a time.
+  const [undos, setUndos] = useState<{ text: string; run: () => Promise<void>; counts: number }[]>([])
+  const [undoing, setUndoing] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
   const grFileRef = useRef<HTMLInputElement>(null)
 
@@ -222,7 +227,6 @@ export function Inbox() {
     setError(undefined)
     setSummary(undefined)
     setGrSummary(undefined)
-    setNote(undefined)
     try {
       const json = JSON.parse(await file.text()) as unknown
       setSummary(await importLibby(json, file.name))
@@ -241,22 +245,47 @@ export function Inbox() {
     }
   }
 
+  /** Remembers an action so it can be undone; `counts` is how many books it added to the sitting's tally. */
+  function remember(text: string, run: () => Promise<void>, counts = 0) {
+    setNote(undefined)
+    setError(undefined)
+    setSorted((n) => n + counts)
+    setUndos((u) => [{ text, run, counts }, ...u].slice(0, UNDO_DEPTH))
+  }
+
   async function acceptClean() {
     const receipts: ResolveReceipt[] = []
-    for (const g of clean) {
-      receipts.push(await resolveGroupWithReceipt({ recordIds: g.records.map((r) => r.id!), resolution: { kind: 'link' }, workId: g.match!.work.id }))
+    setError(undefined)
+    try {
+      for (const g of clean) {
+        receipts.push(await resolveGroupWithReceipt({ recordIds: g.records.map((r) => r.id!), resolution: { kind: 'link' }, workId: g.match!.work.id }))
+      }
+    } catch {
+      // Whatever was linked before the failure stays linked, so it stays undoable.
+      setError(receipts.length ? `Only ${receipts.length} of ${clean.length} could be linked. The rest are still in your Inbox.` : 'That did not save. Nothing changed.')
     }
-    setUndo({
-      text: `Linked the loans for ${receipts.length} ${receipts.length === 1 ? 'book' : 'books'} you already had. Nothing was marked finished.`,
-      run: async () => { for (const r of [...receipts].reverse()) await undoResolve(r) },
-    })
+    if (!receipts.length) return
+    remember(
+      `Linked the loans for ${receipts.length} ${receipts.length === 1 ? 'book' : 'books'} you already had. Nothing was marked finished.`,
+      async () => { for (const r of [...receipts].reverse()) await undoResolve(r) },
+      receipts.length,
+    )
   }
 
   async function doUndo() {
-    if (!undo) return
-    await undo.run()
-    setUndo(undefined)
-    setNote('Undone. Those rows are back in your Inbox.')
+    const [last, ...rest] = undos
+    if (!last || undoing) return
+    setUndoing(true)
+    try {
+      await last.run()
+      setUndos(rest)
+      setSorted((n) => Math.max(0, n - last.counts))
+      setNote(`Undone: ${last.text}`)
+    } catch {
+      setError('That did not undo. Nothing changed.')
+    } finally {
+      setUndoing(false)
+    }
   }
 
   async function onGoodreads(file: File | undefined) {
@@ -265,7 +294,6 @@ export function Inbox() {
     setError(undefined)
     setSummary(undefined)
     setGrSummary(undefined)
-    setNote(undefined)
     try {
       const s = await importGoodreads(await file.text(), file.name, db)
       const parts = [`${s.added} new`, s.updates ? `${s.updates} changed` : '', s.refreshed ? `${s.refreshed} waiting rows updated` : '', s.unchanged ? `${s.unchanged} unchanged` : '', s.keptYours ? `${s.keptYours} changed at Goodreads but left as you edited them` : ''].filter(Boolean)
@@ -308,13 +336,6 @@ export function Inbox() {
         </p>
       )}
       {grSummary && <p className="ib-summary" role="status">{grSummary}</p>}
-      {undo && (
-        <p className="ib-summary undo" role="status">
-          {undo.text}
-          <button type="button" className="btn-link inline" onClick={() => void doUndo()}>Undo</button>
-        </p>
-      )}
-      {note && <p className="ib-summary" role="status">{note}</p>}
       {error && <p className="form-error" role="alert">{error}</p>}
 
       <div className="shelf-tabs" role="group" aria-label="Inbox view">
@@ -327,7 +348,14 @@ export function Inbox() {
       ) : groups.length === 0 && (view === 'pending' ? grPending : grDismissed)?.length === 0 ? (
         <div className="state">
           <p className="state-title">{view === 'pending' ? 'Inbox is clear' : 'Nothing dismissed'}</p>
-          <p>{view === 'pending' ? 'Import a Libby or Goodreads export and its books will wait here for you to review.' : 'Dismissed borrows show up here so you can bring them back.'}</p>
+          {view === 'pending' && sorted > 0 ? (
+            <>
+              <p>{sorted === 1 ? 'The book you sorted this sitting is' : `The ${sorted} books you sorted this sitting are`} in your Library now.</p>
+              <button type="button" className="btn-quiet" onClick={onOpenStats}>See your reading in Stats</button>
+            </>
+          ) : (
+            <p>{view === 'pending' ? 'Import a Libby or Goodreads export and its books will wait here for you to review.' : 'Dismissed borrows show up here so you can bring them back.'}</p>
+          )}
         </div>
       ) : (
         <ul className="ib-list" aria-label={view === 'pending' ? 'Books to review' : 'Dismissed books'}>
@@ -339,14 +367,25 @@ export function Inbox() {
             return (
               <>
                 {shownGr.map((r) => (
-                  <GoodreadsRow key={`gr${r.id}-${JSON.stringify(r.seen)}`} rec={r} works={works} dismissed={view === 'dismissed'} onDone={(text, run) => { setNote(undefined); setUndo({ text, run }) }} />
+                  <GoodreadsRow key={`gr${r.id}-${JSON.stringify(r.seen)}`} rec={r} works={works} dismissed={view === 'dismissed'} onDone={(text, run) => remember(text, run, /^(Added|Linked)/.test(text) ? 1 : 0)} />
                 ))}
-                {shownGroups.map((g) => <GroupRow key={g.key} group={g} dismissed={view === 'dismissed'} onResolved={(r, what) => { setNote(undefined); setUndo({ text: `Marked “${r.title}” ${what}.`, run: () => undoResolve(r) }) }} />)}
+                {shownGroups.map((g) => <GroupRow key={g.key} group={g} dismissed={view === 'dismissed'} onResolved={(r, what) => remember(`Marked “${r.title}” ${what}.`, () => undoResolve(r), 1)} onDismissed={(title, run) => remember(`Dismissed “${title}”.`, run)} />)}
                 {left > 0 && <More left={left} onMore={() => setLimit((l) => l + PAGE)} />}
               </>
             )
           })()}
         </ul>
+      )}
+      {(undos.length > 0 || note) && (
+        <div className="ib-dock">
+          <p role="status">{note ?? undos[0].text}</p>
+          <span className="ib-tally">{pendingGroups.length + (grPending?.length ?? 0)} left{sorted > 0 && ` · ${sorted} sorted`}</span>
+          {undos.length > 0 && (
+            <button type="button" className="btn-link inline" disabled={undoing} onClick={() => void doUndo()}>
+              {note ? 'Undo earlier' : 'Undo'}{undos.length > 1 && <span className="sr-only"> ({undos.length} can be undone)</span>}
+            </button>
+          )}
+        </div>
       )}
     </main>
   )

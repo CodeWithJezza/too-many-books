@@ -169,7 +169,7 @@ export function GoodreadsRow({ rec, works, dismissed, onDone }: {
               {match && (
                 <button type="button" className="btn-quiet" disabled={busy || undecided || same === false} onClick={() => run(async () => { const r = await resolveGoodreads({ recordId: rec.id!, as: 'link', format, workId }, db); onDone(`Linked “${r.title}” to your copy.`, () => undoResolveGoodreads(r, db)) })}>Just link</button>
               )}
-              <button type="button" className="btn-link" disabled={busy} onClick={() => run(() => setGoodreadsDismissed([rec.id!], true, db))}>Dismiss</button>
+              <button type="button" className="btn-link" disabled={busy} onClick={() => run(async () => { await setGoodreadsDismissed([rec.id!], true, db); onDone(`Dismissed “${f.title}”.`, () => setGoodreadsDismissed([rec.id!], false, db)) })}>Dismiss</button>
             </>
           )}
         </div>
