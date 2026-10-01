@@ -18,8 +18,14 @@ import type { DatePart, Format, GenreId, GoodreadsRecord, ImportRecord, Loan, Re
 /** Latest reading is the last one recorded for the Work. */
 const latestOf = (readings: Reading[]) => readings.at(-1)
 
+const SEEDED = 'tmb-seeded'
+const wasSeeded = () => { try { return globalThis.localStorage?.getItem(SEEDED) === '1' } catch { return false } }
+const markSeeded = () => { try { globalThis.localStorage?.setItem(SEEDED, '1') } catch { /* the sample may come back next launch; harmless */ } }
+
+/** Sample books appear once, on a brand-new device. Emptying the library, or removing the samples, never brings them back. */
 export async function seedIfEmpty(store: LibraryDB = db): Promise<void> {
-  if ((await store.works.count()) > 0) return
+  if (wasSeeded() || (await store.works.count()) > 0) return
+  markSeeded()
   await untracked(() => store.transaction('rw', store.works, store.readings, store.loans, async () => {
     for (const s of buildSeed()) {
       const workId = (await store.works.add(s.work)) as number
@@ -27,6 +33,19 @@ export async function seedIfEmpty(store: LibraryDB = db): Promise<void> {
       if (s.loan) await store.loans.add({ ...s.loan, workId })
     }
   }))
+}
+
+/**
+ * Empties every table, including Import records and cached lookups, so the next import proposes
+ * everything again. Takes a backup first only if the reader does; that is the Settings screen's job to ask.
+ */
+export async function eraseLibrary(store: LibraryDB = db): Promise<void> {
+  markSeeded()
+  await untracked(() =>
+    store.transaction('rw', [store.works, store.readings, store.loans, store.importRecords, store.imports, store.metadata, store.grRecords], async () => {
+      await Promise.all([store.works.clear(), store.readings.clear(), store.loans.clear(), store.importRecords.clear(), store.imports.clear(), store.metadata.clear(), store.grRecords.clear()])
+    }),
+  )
 }
 
 export async function requestPersistence(): Promise<void> {

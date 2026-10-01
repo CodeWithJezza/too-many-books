@@ -4,7 +4,7 @@ import { changesSinceBackup, lastBackupAt, subscribeChanges } from '../backup/ch
 import { Segmented } from '../components/FormControls'
 import { isAppleTouch, isInstalled } from '../pwa'
 import { setLookupMode, useLookupMode, type LookupMode } from '../settings'
-import { db } from '../storage'
+import { db, eraseLibrary } from '../storage'
 import { useSyncExternalStore } from 'react'
 
 function download(name: string, data: string, type: string) {
@@ -30,6 +30,7 @@ export function Settings() {
   const [msg, setMsg] = useState<string | undefined>()
   const [error, setError] = useState<string | undefined>()
   const [busy, setBusy] = useState(false)
+  const [erasing, setErasing] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
   const lookupMode = useLookupMode()
 
@@ -45,6 +46,21 @@ export function Settings() {
       setMsg('Backup downloaded. Keep the file somewhere safe, such as iCloud Drive.')
     } catch {
       setError('Could not create the backup. Nothing was changed.')
+    }
+  }
+
+  async function erase() {
+    setBusy(true)
+    setError(undefined)
+    try {
+      await eraseLibrary()
+      setErasing(false)
+      setCurrent({ works: 0, readings: 0 })
+      setMsg('Your library is empty. Import your Libby or Goodreads file again from the Inbox.')
+    } catch {
+      setError('Could not erase the library. Nothing was changed.')
+    } finally {
+      setBusy(false)
     }
   }
 
@@ -138,6 +154,23 @@ export function Settings() {
               <button type="button" className="btn-quiet" disabled={busy} onClick={() => setPending(undefined)}>Cancel</button>
             </div>
           </div>
+        )}
+      </section>
+
+      <section className="set-section danger-zone" aria-labelledby="er">
+        <h2 id="er" className="set-title">Erase library</h2>
+        <p>Removes every book, reading, loan and import record on this device, so you can start over and import again. Sample books do not come back.</p>
+        {erasing ? (
+          <div className="confirm" role="alertdialog" aria-labelledby="er-c">
+            <p id="er-c" className="confirm-title">Erase your whole library?</p>
+            <p>You have {current.works} {current.works === 1 ? 'book' : 'books'} and {current.readings} {current.readings === 1 ? 'reading' : 'readings'}. They will be gone, along with the record of what you have already imported and dismissed. {changes > 0 ? `${changes} ${changes === 1 ? 'change has' : 'changes have'} not been backed up.` : ''}</p>
+            <div className="form-actions">
+              <button type="button" className="btn-danger" disabled={busy} onClick={() => void erase()}>{busy ? 'Erasing…' : 'Erase everything'}</button>
+              <button type="button" className="btn-quiet" disabled={busy} onClick={() => setErasing(false)}>Keep my library</button>
+            </div>
+          </div>
+        ) : (
+          <button type="button" className="btn-quiet" onClick={() => { void Promise.all([db.works.count(), db.readings.count()]).then(([works, readings]) => { setCurrent({ works, readings }); setErasing(true) }) }}>Erase library…</button>
         )}
       </section>
 

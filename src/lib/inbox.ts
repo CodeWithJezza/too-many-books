@@ -38,7 +38,15 @@ export function buildGroups(records: ImportRecord[], works: Work[]): InboxGroup[
   const groups = new Map<string, InboxGroup>()
   for (const r of records) {
     const match = matchRecord(works, r)
-    const key = match ? `w${match.work.id}` : `t:${nameKey(r.title, r.author)}`
+    let key = match ? `w${match.work.id}` : `t:${nameKey(r.title, r.author)}`
+    // Libby gives a manga and its light novel the same title. Two different title IDs in the same
+    // format are therefore two books until the reader says otherwise; an ebook and an audiobook of
+    // one title are still treated as one.
+    if (!match) {
+      for (let n = 1; groups.get(key)?.records.some((o) => o.titleId !== r.titleId && o.format !== undefined && o.format === r.format); n++) {
+        key = `t:${nameKey(r.title, r.author)}#${n}`
+      }
+    }
     const g = groups.get(key)
     if (g) {
       g.records.push(r)

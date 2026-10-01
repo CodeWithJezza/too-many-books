@@ -158,3 +158,16 @@ describe('new Work details from a lookup', () => {
     expect(w).toMatchObject({ genres: ['scifi'], pageCount: 300, externalIds: { openLibrary: ['/works/OL1W'], isbn: ['999'], libby: ['3003'] } })
   })
 })
+
+describe('same-title records with different title IDs', () => {
+  const rec = (id: number, titleId: string, format?: 'ebook' | 'audiobook') => ({
+    id, importId: 1, state: 'pending' as const, source: 'libby' as const, key: `k${id}`, title: 'Fushi no Kami, Volume 1', author: 'Hifumi', titleId,
+    format, libraryKey: 'l', libraryName: 'L', borrowedAt: id,
+  })
+  it('keeps two ebooks with different title IDs apart, since Libby titles a manga and its light novel the same', () => {
+    expect(buildGroups([rec(1, 'A', 'ebook'), rec(2, 'B', 'ebook')], [])).toHaveLength(2)
+  })
+  it('still joins an ebook and an audiobook of one title, and repeat borrows of one title ID', () => {
+    expect(buildGroups([rec(1, 'A', 'ebook'), rec(2, 'B', 'audiobook'), rec(3, 'A', 'ebook')], [])).toHaveLength(1)
+  })
+})
