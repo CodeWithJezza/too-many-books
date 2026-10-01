@@ -448,7 +448,7 @@ main h1:focus { outline: none; }
 .chip-filters li { display: inline-flex; align-items: center; gap: 2px; padding: 0 4px 0 12px; min-height: 36px; border: 1px solid var(--ink); border-radius: 99px; font-size: 14px; font-weight: 600; }
 .chip-filters button { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 99px; }
 .st-filters { align-items: center; }
-.st-strip { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 56px; margin-top: 14px; padding: 6px 0; background: var(--bg); border-bottom: 1px solid var(--rule); font-size: 16px; }
+.st-strip { position: sticky; top: -28px; margin-inline: -28px; z-index: 2; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 56px; margin-top: 14px; padding: 6px 28px; background: var(--bg); border-bottom: 1px solid var(--rule); font-size: 16px; }
 .st-row { display: grid; grid-template-columns: 96px minmax(0, 1fr) 32px; gap: 12px; align-items: center; width: 100%; min-height: 44px; text-align: left; border-radius: 4px; }
 .st-rank .st-row { grid-template-columns: 28px minmax(0, 1fr) 32px; }
 .st-row[aria-pressed='true'], button.st-seg[aria-pressed='true'] { box-shadow: 0 0 0 2px var(--ink); }
@@ -514,3 +514,6 @@ button.cmp-track[aria-pressed='true'] { box-shadow: 0 0 0 2px var(--ink); border
 .cmp-line.a { background: var(--ink-genre, var(--ink)); }
 .cmp-line.b { background: var(--ink-genre, var(--accent)); background-image: repeating-linear-gradient(45deg, rgb(255 255 255 / 0.35) 0 3px, transparent 3px 6px); }
 @media (max-width: 759px) { .cmp-row { grid-template-columns: 84px minmax(0, 1fr); } .cmp-month { min-width: 46px; } }
+
+/* The scroller's padding offsets a sticky strip, so pull it up by the same amount; on phones the page scrolls and there is no such padding. */
+@media (max-width: 759px) { .st-strip { top: 0; margin-inline: -16px; padding-inline: 16px; } }
