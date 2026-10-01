@@ -50,10 +50,10 @@ export function Stats() {
     <main className="library stats">
       <div className="lib-head"><h1>Stats</h1></div>
 
-      <div className="shelf-tabs" role="tablist" aria-label="Year">
-        <button type="button" role="tab" className="shelf-tab" aria-selected={year === 'all'} onClick={() => setYear('all')}>All years</button>
+      <div className="shelf-tabs" role="group" aria-label="Year">
+        <button type="button" className="shelf-tab" aria-pressed={year === 'all'} onClick={() => setYear('all')}>All years</button>
         {s.years.map((y) => (
-          <button key={y} type="button" role="tab" className="shelf-tab" aria-selected={year === y} onClick={() => setYear(y)}>{y}</button>
+          <button key={y} type="button" className="shelf-tab" aria-pressed={year === y} onClick={() => setYear(y)}>{y}</button>
         ))}
       </div>
 

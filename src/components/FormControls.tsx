@@ -1,4 +1,4 @@
-import { useId } from 'react'
+import { useId, useRef } from 'react'
 import { toDatePart, type Precision } from '../lib/dates'
 
 export const dateOk = (iso: string, p: Precision) => p === 'unknown' || toDatePart(iso, p) !== undefined
@@ -10,16 +10,30 @@ const PRECISIONS: { id: Precision; label: string }[] = [
   { id: 'unknown', label: 'Unknown' },
 ]
 
+/**
+ * A radio group built from pills: one tab stop, arrow keys move the choice. With no
+ * choice made yet, the first pill is the tab stop.
+ */
 export function Segmented<T extends string>({ label, value, options, onChange }: {
   label: string
-  value: T
+  value: T | undefined
   options: { id: T; label: string }[]
   onChange: (v: T) => void
 }) {
+  const refs = useRef<(HTMLButtonElement | null)[]>([])
+  const active = Math.max(0, options.findIndex((o) => o.id === value))
+  function onKey(e: React.KeyboardEvent, i: number) {
+    const dir = e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1 : e.key === 'ArrowLeft' || e.key === 'ArrowUp' ? -1 : 0
+    if (!dir) return
+    e.preventDefault()
+    const next = (i + dir + options.length) % options.length
+    onChange(options[next].id)
+    refs.current[next]?.focus()
+  }
   return (
     <div className="segmented" role="radiogroup" aria-label={label}>
-      {options.map((o) => (
-        <button key={o.id} type="button" role="radio" aria-checked={value === o.id} onClick={() => onChange(o.id)}>{o.label}</button>
+      {options.map((o, i) => (
+        <button key={o.id} ref={(el) => { refs.current[i] = el }} type="button" role="radio" aria-checked={value === o.id} tabIndex={i === active ? 0 : -1} onKeyDown={(e) => onKey(e, i)} onClick={() => onChange(o.id)}>{o.label}</button>
       ))}
     </div>
   )

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Jacket } from '../components/Jacket'
+import { Segmented } from '../components/FormControls'
 import { formatDate } from '../lib/dates'
 import { GENRES } from '../lib/genres'
 import { matchGoodreads } from '../lib/inbox'
@@ -113,18 +114,13 @@ export function GoodreadsRow({ rec, works, dismissed, onDone }: {
         {match?.kind === 'fuzzy' && (
           <div className="ib-match">
             <p>Is this the same as <strong>{match.work.title}</strong>{match.work.author ? ` by ${match.work.author}` : ''}?</p>
-            <div className="segmented" role="radiogroup" aria-label={`Same book as ${match.work.title}`}>
-              <button type="button" role="radio" aria-checked={same === true} onClick={() => setSame(true)}>Same book</button>
-              <button type="button" role="radio" aria-checked={same === false} onClick={() => setSame(false)}>Different book</button>
-            </div>
+            <Segmented label={`Same book as ${match.work.title}`} value={same === undefined ? undefined : same ? 'same' : 'different'} options={[{ id: 'same', label: 'Same book' }, { id: 'different', label: 'Different book' }]} onChange={(v) => setSame(v === 'same')} />
           </div>
         )}
 
         {!dismissed && !isUpdate && (
           <div className="ib-genres">
-            <div className="segmented" role="radiogroup" aria-label={`Add ${f.title} as`}>
-              {AS.map((o) => <button key={o.id} type="button" role="radio" aria-checked={as === o.id} onClick={() => setAs(o.id)}>{o.label}</button>)}
-            </div>
+            <Segmented label={`Add ${f.title} as`} value={as} options={AS} onChange={setAs} />
             {makesNewWork && (
               <>
                 <p className="ib-lookup" role={lookup.state === 'failed' ? 'status' : undefined}>

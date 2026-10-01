@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from 'react'
 import { Jacket } from '../components/Jacket'
+import { Segmented } from '../components/FormControls'
 import { formatDate } from '../lib/dates'
 import { GENRES } from '../lib/genres'
 import { useLookup } from '../import/lookup'
@@ -82,10 +83,7 @@ function GroupRow({ group, dismissed, onResolved }: { group: InboxGroup; dismiss
         {!dismissed && match?.kind === 'fuzzy' && (
           <div className="ib-match">
             <p>Is this the same as <strong>{match.work.title}</strong>{match.work.author ? ` by ${match.work.author}` : ''}?</p>
-            <div className="segmented" role="radiogroup" aria-label={`Same book as ${match.work.title}`}>
-              <button type="button" role="radio" aria-checked={same === true} onClick={() => setSame(true)}>Same book</button>
-              <button type="button" role="radio" aria-checked={same === false} onClick={() => setSame(false)}>Different book</button>
-            </div>
+            <Segmented label={`Same book as ${match.work.title}`} value={same === undefined ? undefined : same ? 'same' : 'different'} options={[{ id: 'same', label: 'Same book' }, { id: 'different', label: 'Different book' }]} onChange={(v) => setSame(v === 'same')} />
           </div>
         )}
 
@@ -269,9 +267,9 @@ export function Inbox() {
       {note && <p className="ib-summary" role="status">{note}</p>}
       {error && <p className="form-error" role="alert">{error}</p>}
 
-      <div className="shelf-tabs" role="tablist" aria-label="Inbox view">
-        <button type="button" role="tab" className="shelf-tab" aria-selected={view === 'pending'} onClick={() => setView('pending')}>To review <span>{pendingGroups.length + (grPending?.length ?? 0)}</span></button>
-        <button type="button" role="tab" className="shelf-tab" aria-selected={view === 'dismissed'} onClick={() => setView('dismissed')}>Dismissed <span>{dismissedGroups.length + (grDismissed?.length ?? 0)}</span></button>
+      <div className="shelf-tabs" role="group" aria-label="Inbox view">
+        <button type="button" className="shelf-tab" aria-pressed={view === 'pending'} onClick={() => setView('pending')}>To review <span>{pendingGroups.length + (grPending?.length ?? 0)}</span></button>
+        <button type="button" className="shelf-tab" aria-pressed={view === 'dismissed'} onClick={() => setView('dismissed')}>Dismissed <span>{dismissedGroups.length + (grDismissed?.length ?? 0)}</span></button>
       </div>
 
       {pending === undefined ? (

@@ -122,8 +122,12 @@ export function Add({ onSaved }: { onSaved: (workId: number) => void }) {
   const finishBad = readingFields && finishShown && !dateOk(finish.iso, finish.precision)
   const canSave = !!picked && !saving && !startBad && !finishBad
 
+  const busy = useRef(false)
   async function save() {
-    if (!picked) return
+    // Enter in a field submits the form even when the Save button is disabled, and a fast
+    // double Enter would otherwise save twice before state updates.
+    if (!picked || !canSave || busy.current) return
+    busy.current = true
     setSaving(true)
     setError(undefined)
     try {
@@ -154,6 +158,7 @@ export function Add({ onSaved }: { onSaved: (workId: number) => void }) {
       )
       onSaved(id)
     } catch (e) {
+      busy.current = false
       setSaving(false)
       setError(e instanceof Error ? e.message : 'Could not save. Nothing was added.')
     }

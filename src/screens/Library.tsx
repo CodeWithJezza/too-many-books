@@ -100,9 +100,9 @@ export function Library({ works, selectedId, onSelect, sample, onOpenSettings }:
         </label>
       </div>
 
-      <div className="shelf-tabs" role="tablist" aria-label="Shelf">
+      <div className="shelf-tabs" role="group" aria-label="Shelf">
         {SHELVES.map((s) => (
-          <button key={s.id} type="button" role="tab" aria-selected={q.shelf === s.id} className="shelf-tab" onClick={() => set('shelf', s.id)}>
+          <button key={s.id} type="button" aria-pressed={q.shelf === s.id} className="shelf-tab" onClick={() => set('shelf', s.id)}>
             {s.label} <span>{counts[s.id]}</span>
           </button>
         ))}

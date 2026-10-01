@@ -14,6 +14,11 @@
   --error: #a3260f;
   --star-off: #8a7a52;
   --star-fill: #ddd0ac;
+  --star-on: var(--accent);
+  /* Cream surfaces keep these in both themes. */
+  --card-star-off: #8a7a52;
+  --card-star-fill: #ddd0ac;
+  --card-accent: #c9500f;
   --shadow: 40 25 5;
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
   --side-w: 184px;
@@ -90,8 +95,8 @@ h1 { font-size: 36px; font-weight: 800; line-height: 1.05; letter-spacing: -0.01
 .shelf-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0 26px; }
 .shelf-tab { flex: none; min-height: 44px; padding: 0 14px; border: 1px solid var(--rule); border-radius: 99px; font-size: 15px; font-weight: 500; }
 .shelf-tab span { color: var(--mute); margin-left: 4px; font-size: 13px; }
-.shelf-tab[aria-selected='true'] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
-.shelf-tab[aria-selected='true'] span { color: inherit; opacity: 0.75; }
+.shelf-tab[aria-pressed='true'] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.shelf-tab[aria-pressed='true'] span { color: inherit; opacity: 0.75; }
 
 .wall { display: grid; grid-template-columns: repeat(auto-fill, minmax(124px, 1fr)); gap: 30px 20px; }
 .wall-item { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
@@ -124,7 +129,7 @@ button.jacket { display: grid; }
 /* ---------- ratings ---------- */
 .stars { display: inline-flex; gap: 1px; line-height: 0; }
 .star-off { fill: var(--star-fill); stroke: var(--star-off); stroke-width: 1.4; stroke-linejoin: round; }
-.star-on { fill: var(--accent); }
+.star-on { fill: var(--star-on); }
 .unrated { font-size: 12px; color: var(--mute); font-style: italic; }
 
 /* ---------- work panel ---------- */
@@ -222,11 +227,10 @@ textarea.input { resize: vertical; line-height: 1.45; }
 .combo { position: relative; }
 .results { position: absolute; z-index: 3; left: 0; right: 0; top: calc(100% + 6px); background: var(--card); color: var(--cardink); border: 1px solid var(--rule); border-radius: 6px; box-shadow: 0 12px 28px rgb(var(--shadow) / 0.22); max-height: 380px; overflow-y: auto; }
 .result { display: grid; grid-template-columns: 1fr auto; gap: 0 12px; padding: 10px 14px; min-height: 52px; align-items: center; cursor: pointer; border-bottom: 1px solid var(--rule); }
-.result-src { grid-column: 1 / -1; font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--cardmute); }
 .result-title { font-weight: 700; font-size: 16px; }
 .result-sub { font-size: 14px; color: var(--cardmute); text-align: right; }
 .result[aria-selected='true'] { background: var(--ink); color: var(--bg); }
-.result[aria-selected='true'] .result-src, .result[aria-selected='true'] .result-sub { color: inherit; opacity: 0.8; }
+.result[aria-selected='true'] .result-sub { color: inherit; opacity: 0.8; }
 .result.manual { display: block; position: sticky; bottom: 0; background: var(--card); border-top: 1px solid var(--rule); border-bottom: 0; }
 .result-tag { margin-left: 8px; padding: 1px 8px; border: 1px solid var(--cardmute); border-radius: 99px; font-size: 13px; font-weight: 600; color: var(--cardmute); }
 .result[aria-selected='true'] .result-tag { border-color: currentColor; color: inherit; }
@@ -316,7 +320,9 @@ textarea.input { resize: vertical; line-height: 1.45; }
 .ib-lookup { font-size: 13px; color: var(--mute); min-height: 1.3em; }
 .genre-pick.sm { min-height: 44px; padding: 0 12px; font-size: 14px; }
 /* Cream surfaces keep the light star tokens in the dark theme. */
-.row, .result, .picked, .confirm { --star-fill: #ddd0ac; --star-off: #8a7a52; }
+/* Cream surfaces keep light-theme ink, muted text and stars in the dark theme too. */
+.row, .result, .picked, .confirm { --star-fill: var(--card-star-fill); --star-off: var(--card-star-off); --star-on: var(--card-accent); }
+.row, .result, .confirm { --ink: var(--cardink); --mute: var(--cardmute); }
 
 /* ---------- stats ---------- */
 .stats { max-width: 1100px; }
@@ -372,7 +378,6 @@ button.st-col[aria-pressed='true'] { background: var(--panel); box-shadow: 0 0 0
 .band-foot { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: 0.08em; }
 @media (max-width: 759px) { .cap { white-space: normal; overflow: visible; min-height: 2.5em; font-size: 12px; } }
 
-.ib-source { font-size: 13px; font-weight: 600; color: var(--mute); }
 .ib-review { font-size: 15px; color: var(--mute); max-width: 60ch; }
 .ib-changes { display: grid; gap: 4px; margin-top: 6px; font-size: 15px; }
 
@@ -422,3 +427,11 @@ button, select, input, textarea, label, .jacket { touch-action: manipulation; }
   .add, .theme { margin-left: 14px; margin-right: 14px; }
   .theme { margin-top: 4px; min-height: 44px; }
 }
+
+/* ---------- harden: long text, large libraries ---------- */
+h1, h2, .picked-title, .ib-title, .ib-author, .row-title, .work-author, .st-bl, .cap { overflow-wrap: anywhere; }
+.jacket-title { overflow-wrap: anywhere; hyphens: auto; }
+.band-top { overflow: hidden; overflow-wrap: anywhere; }
+.wall-item { content-visibility: auto; contain-intrinsic-size: auto 300px; }
+main h1:focus { outline: none; }
+.fallback { max-width: 62ch; }

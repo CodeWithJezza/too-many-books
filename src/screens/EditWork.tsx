@@ -88,6 +88,7 @@ export function EditWork({ id, onClose, onDeleted, onDirty, leaveRequested, onLe
   // Nothing to lose: let a navigation request through immediately.
   useEffect(() => { if (leaveRequested && !dirty) onLeaveAnswer(true) }, [leaveRequested, dirty, onLeaveAnswer])
   const keepRef = useRef<HTMLButtonElement>(null)
+  const busy = useRef(false)
   // When the question opens, put it and its safe answer where the reader is looking.
   useEffect(() => { if (discardOpen) keepRef.current?.focus() }, [discardOpen])
   const cancel = () => (dirty ? setAskDiscard(true) : onClose())
@@ -110,6 +111,8 @@ export function EditWork({ id, onClose, onDeleted, onDirty, leaveRequested, onLe
   const preview: WorkSummary = { id, title: title || 'Untitled', author, genres, tags: [], shelves: [], readingCount: 0, coverUrl: detail?.coverUrl, series: seriesName.trim() && seriesPos !== '' ? { name: seriesName.trim(), position: Number(seriesPos) } : undefined }
 
   async function save() {
+    if (!canSave || busy.current) return
+    busy.current = true
     setSaving(true)
     setError(undefined)
     try {
@@ -126,6 +129,7 @@ export function EditWork({ id, onClose, onDeleted, onDirty, leaveRequested, onLe
       }, edits)
       onClose()
     } catch (e) {
+      busy.current = false
       setSaving(false)
       setError(e instanceof Error ? e.message : 'Could not save. Nothing was changed.')
     }

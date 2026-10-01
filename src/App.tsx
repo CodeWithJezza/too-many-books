@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { applyUpdate, dismissOffline, pwaState, subscribePwa } from './pwa'
 import { applyQuery, defaultQuery } from './lib/filter'
 import { Icon, type IconName } from './components/Icon'
@@ -45,6 +45,7 @@ export default function App() {
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme
+    document.querySelector('meta[name=theme-color]')?.setAttribute('content', theme === 'dark' ? '#241d16' : '#f2ead6')
     try {
       localStorage.setItem('tmb-theme', theme)
     } catch {
@@ -64,6 +65,18 @@ export default function App() {
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
+  // A screen change is announced the way a page load would be: a new title, and focus
+  // moves to the screen's heading so keyboard and screen-reader users start there.
+  const screenKey = editId !== undefined ? 'edit' : tab
+  const firstScreen = useRef(true)
+  useEffect(() => {
+    const names: Record<string, string> = { library: 'Library', inbox: 'Inbox', stats: 'Stats', settings: 'Settings', add: 'Add a book', edit: 'Edit book' }
+    document.title = `${names[screenKey]} · Too Many Books`
+    if (firstScreen.current) { firstScreen.current = false; return }
+    const h = document.querySelector<HTMLElement>('main h1')
+    if (h) { h.tabIndex = -1; h.focus({ preventScroll: true }) }
+  }, [screenKey])
+
   /** Every navigation goes through here so an unsaved edit is never dropped silently. */
   function go(action: () => void) {
     if (editId !== undefined && editDirty) setLeaveTo(() => action)
@@ -72,6 +85,24 @@ export default function App() {
 
   const sample = !!works?.some((w) => w.synthetic)
   const panelOpen = selectedId !== undefined
+
+  // Below 1100px the Work details open as a sheet: make it behave like one. Focus moves in,
+  // the page behind is inert so Tab and screen readers stay inside, and focus returns to the
+  // book that opened it.
+  const sheetOpen = panelOpen && editId === undefined && tab === 'library' && typeof window !== 'undefined' && !window.matchMedia('(min-width: 1100px)').matches
+  const opener = useRef<HTMLElement | null>(null)
+  useEffect(() => {
+    const behind = document.querySelectorAll<HTMLElement>('.side, main.library')
+    if (!sheetOpen) { behind.forEach((e) => { e.inert = false }); return }
+    opener.current = document.activeElement as HTMLElement | null
+    behind.forEach((e) => { e.inert = true })
+    requestAnimationFrame(() => document.querySelector<HTMLElement>('.panel-close')?.focus())
+    return () => {
+      behind.forEach((e) => { e.inert = false })
+      opener.current?.focus?.({ preventScroll: true })
+    }
+  }, [sheetOpen])
+
 
   return (
     <div className="app" data-panel={panelOpen ? 'open' : 'closed'} data-tab={tab === 'library' && editId === undefined ? 'library' : 'other'}>
