@@ -114,7 +114,7 @@ export default function App() {
           <WorkPanel id={selectedId} onClose={() => setSelectedId(undefined)} onEdit={setEditId} />
         </>
       )}
-      {tab === 'library' && panelOpen && <div className="scrim" onClick={() => setSelectedId(undefined)} aria-hidden="true" />}
+      {editId === undefined && tab === 'library' && panelOpen && <div className="scrim" onClick={() => setSelectedId(undefined)} aria-hidden="true" />}
       {editId === undefined && tab === 'inbox' && <Inbox />}
       {editId === undefined && tab === 'stats' && <Stats />}
       {editId === undefined && tab === 'settings' && <Settings />}
