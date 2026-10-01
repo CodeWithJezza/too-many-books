@@ -7,6 +7,7 @@ import { computeLoanStats } from '../lib/loanStats'
 import { computeAuthors } from '../lib/authors'
 import { computePageStats } from '../lib/pages'
 import { computeTrends } from '../lib/trends'
+import { Icon } from '../components/Icon'
 import { setChart, useChart } from '../settings'
 import { computeStats, type Key, type YearFilter } from '../lib/stats'
 import { useReadingData } from '../storage'
@@ -37,6 +38,7 @@ export function Stats({ onOpenLibrary }: { onOpenLibrary: (q: LibraryQuery) => v
   const [year, setYear] = useState<YearFilter>('all')
   const [facets, setFacets] = useState<Facets>(noFacets)
   const [sel, setSel] = useState<Selection | undefined>()
+  const [filtersOpen, setFiltersOpen] = useState(false)
   const s = useMemo(() => (data ? computeStats(data.readings, data.works, year, facets) : undefined), [data, year, facets])
   const ls = useMemo(() => (data ? computeLoanStats(data.loans, data.readings, data.works, year, facets) : undefined), [data, year, facets])
   const showPages = useChart('pages')
@@ -82,6 +84,13 @@ export function Stats({ onOpenLibrary }: { onOpenLibrary: (q: LibraryQuery) => v
   const excluded = year !== 'all' && s.unknownDate > 0
   const nothing = s.finishedCount === 0 && s.dnfCount === 0 && s.unknownDate === 0
 
+  const chips: { key: string; label: string; clear: Partial<Facets> }[] = []
+  if (facets.genre !== 'any') chips.push({ key: 'genre', label: genre(facets.genre).label, clear: { genre: 'any' } })
+  if (facets.tag !== 'any') chips.push({ key: 'tag', label: `Tag: ${facets.tag}`, clear: { tag: 'any' } })
+  if (facets.series !== 'any') chips.push({ key: 'series', label: `Series: ${facets.series}`, clear: { series: 'any' } })
+  if (facets.rating !== 'any') chips.push({ key: 'rating', label: facets.rating === 'unrated' ? 'Unrated' : `Rated ${facets.rating}`, clear: { rating: 'any' } })
+  if (facets.format !== 'any') chips.push({ key: 'format', label: FORMAT_LABEL[facets.format], clear: { format: 'any' } })
+
   return (
     <main className="library stats">
       <div className="lib-head"><h1>Stats</h1></div>
@@ -93,47 +102,60 @@ export function Stats({ onOpenLibrary }: { onOpenLibrary: (q: LibraryQuery) => v
         ))}
       </div>
 
-      <div className="tools st-filters">
-        <label className="select">
-          <span className="sr-only">Genre</span>
-          <select value={facets.genre} onChange={(e) => setFacet('genre', e.target.value as GenreId | 'any')}>
-            <option value="any">All genres</option>
-            {GENRES.map((g) => <option key={g.id} value={g.id}>{g.label}</option>)}
-          </select>
-        </label>
-        <label className="select">
-          <span className="sr-only">Tag</span>
-          <select value={facets.tag} onChange={(e) => setFacet('tag', e.target.value)}>
-            <option value="any">All tags</option>
-            {tags.map((t) => <option key={t} value={t}>{t}</option>)}
-          </select>
-        </label>
-        {seriesList.length > 0 && (
+      <div className="tools">
+        <button type="button" className="btn-quiet" aria-expanded={filtersOpen || chips.length > 0} onClick={() => setFiltersOpen(!filtersOpen)}>Filters{chips.length > 0 && ` · ${chips.length}`}</button>
+      </div>
+
+      {(filtersOpen || chips.length > 0) && (
+        <div className="tools st-filters">
           <label className="select">
-            <span className="sr-only">Series</span>
-            <select value={facets.series} onChange={(e) => setFacet('series', e.target.value)}>
-              <option value="any">All series</option>
-              {seriesList.map((s) => <option key={s.key} value={s.name}>{s.name}</option>)}
+            <span className="sr-only">Genre</span>
+            <select value={facets.genre} onChange={(e) => setFacet('genre', e.target.value as GenreId | 'any')}>
+              <option value="any">All genres</option>
+              {GENRES.map((g) => <option key={g.id} value={g.id}>{g.label}</option>)}
             </select>
           </label>
-        )}
-        <label className="select">
-          <span className="sr-only">Rating</span>
-          <select value={String(facets.rating)} onChange={(e) => setFacet('rating', e.target.value === 'any' || e.target.value === 'unrated' ? e.target.value : Number(e.target.value))}>
-            <option value="any">Any rating</option>
-            {RATING_CHOICES.map((r) => <option key={r} value={r}>{r} {r === 1 ? 'star' : 'stars'}</option>)}
-            <option value="unrated">Unrated</option>
-          </select>
-        </label>
-        <label className="select">
-          <span className="sr-only">Format</span>
-          <select value={facets.format} onChange={(e) => setFacet('format', e.target.value as Format | 'any')}>
-            <option value="any">All formats</option>
-            {(Object.keys(FORMAT_LABEL) as Format[]).map((f) => <option key={f} value={f}>{FORMAT_LABEL[f]}</option>)}
-          </select>
-        </label>
-        {facetsOn && <button type="button" className="btn-quiet" onClick={() => { setFacets(noFacets); setSel(undefined) }}>Clear filters</button>}
-      </div>
+          <label className="select">
+            <span className="sr-only">Tag</span>
+            <select value={facets.tag} onChange={(e) => setFacet('tag', e.target.value)}>
+              <option value="any">All tags</option>
+              {tags.map((t) => <option key={t} value={t}>{t}</option>)}
+            </select>
+          </label>
+          {seriesList.length > 0 && (
+            <label className="select">
+              <span className="sr-only">Series</span>
+              <select value={facets.series} onChange={(e) => setFacet('series', e.target.value)}>
+                <option value="any">All series</option>
+                {seriesList.map((s) => <option key={s.key} value={s.name}>{s.name}</option>)}
+              </select>
+            </label>
+          )}
+          <label className="select">
+            <span className="sr-only">Rating</span>
+            <select value={String(facets.rating)} onChange={(e) => setFacet('rating', e.target.value === 'any' || e.target.value === 'unrated' ? e.target.value : Number(e.target.value))}>
+              <option value="any">Any rating</option>
+              {RATING_CHOICES.map((r) => <option key={r} value={r}>{r} {r === 1 ? 'star' : 'stars'}</option>)}
+              <option value="unrated">Unrated</option>
+            </select>
+          </label>
+          <label className="select">
+            <span className="sr-only">Format</span>
+            <select value={facets.format} onChange={(e) => setFacet('format', e.target.value as Format | 'any')}>
+              <option value="any">All formats</option>
+              {(Object.keys(FORMAT_LABEL) as Format[]).map((f) => <option key={f} value={f}>{FORMAT_LABEL[f]}</option>)}
+            </select>
+          </label>
+        </div>
+      )}
+      {chips.length > 0 && (
+        <ul className="chip-filters" aria-label="Active filters">
+          {chips.map((c) => (
+            <li key={c.key}>{c.label}<button type="button" aria-label={`Remove filter ${c.label}`} onClick={() => setFacet(c.key as keyof Facets, noFacets[c.key as keyof Facets])}><Icon name="close" size={16} /></button></li>
+          ))}
+          {chips.length > 1 && <li className="chip-clear"><button type="button" className="btn-link inline" onClick={() => { setFacets(noFacets); setSel(undefined) }}>Clear all</button></li>}
+        </ul>
+      )}
 
       <p className="st-summary">
         {s.finishedCount} {s.finishedCount === 1 ? 'book' : 'books'} finished {scope}
@@ -289,6 +311,9 @@ export function Stats({ onOpenLibrary }: { onOpenLibrary: (q: LibraryQuery) => v
           )}
         </section>
 
+        <details className="st-fold st-wide">
+          <summary>More: compare years{seriesShown.length > 0 && ', series progress'}</summary>
+          <div className="st-grid">
         <StatsCompare readings={data!.readings} works={data!.works} years={s.years} facets={facets} pick={pick} isOn={on} />
 
         {seriesShown.length > 0 && (
@@ -314,6 +339,8 @@ export function Stats({ onOpenLibrary }: { onOpenLibrary: (q: LibraryQuery) => v
             <p className="hint">Counts volumes, not readings. Only series with more than one volume or a gap are shown, and gaps are whole-number volumes below your highest. The real length of a series is not known.</p>
           </section>
         )}
+          </div>
+        </details>
       </div>
       )}
 
