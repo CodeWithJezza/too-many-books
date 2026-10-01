@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { GENRES, NO_GENRE_INK, genre } from '../lib/genres'
 import { defaultQuery, noFacets, workFacetsOk, type Facets, type LibraryQuery } from '../lib/filter'
 import { buildSeries } from '../lib/series'
+import { StatsCompare } from './StatsCompare'
 import { computeLoanStats } from '../lib/loanStats'
 import { computePageStats } from '../lib/pages'
 import { setShowPages, useShowPages } from '../settings'
@@ -280,6 +281,8 @@ export function Stats({ onOpenLibrary }: { onOpenLibrary: (q: LibraryQuery) => v
             </ol>
           )}
         </section>
+
+        <StatsCompare readings={data!.readings} works={data!.works} years={s.years} facets={facets} pick={pick} isOn={on} />
 
         {seriesShown.length > 0 && (
           <section className="st-card st-wide" aria-labelledby="st-series">

@@ -73,6 +73,7 @@ Counting rules and the shared filter model are in ADR 0008; this is the list of 
 - Format split by year (ebook/audiobook/print).
 - Top authors (ranked list).
 - Library loans: loans per year, or per month once a year is picked; libraries ranked; borrowed Readings (finished Readings tied to a Loan versus no loan recorded); and borrowed, not finished. Loans narrow by Genre and Tag only; Rating and Format apply to the borrowed-Readings count.
+- Compare years (shown once two years have data): two chosen years side by side for books per month, genres and formats. Each year keeps its own bar, side by side rather than overlaid; the second year is also hatched in the genre and format bars so colour is never the only cue. It ignores the year buttons, follows the filters, counts finished Readings under ADR 0008, and states Readings recorded only to the year. A tap selects a bar and opens its books in Library like any other chart.
 - Series progress: for each series with more than one volume or a gap, one dot per volume (read, in library but not read, gap) and a count of volumes read out of volumes held plus gaps. It counts volumes (Works), not Readings, narrows by Genre, Tag and Series only, and a tap opens that Series in Library.
 - Pages per year and per month, optional: hidden until "Show pages read" under "More charts" is ticked (remembered per device). Pages come from the Work's page count, so they are an estimate; audiobooks and books with no page count are left out and counted in a note.
 
