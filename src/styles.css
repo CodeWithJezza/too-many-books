@@ -517,3 +517,14 @@ button.cmp-track[aria-pressed='true'] { box-shadow: 0 0 0 2px var(--ink); border
 
 /* The scroller's padding offsets a sticky strip, so pull it up by the same amount; on phones the page scrolls and there is no such padding. */
 @media (max-width: 759px) { .st-strip { top: 0; margin-inline: -16px; padding-inline: 16px; } }
+
+/* ---------- optional charts: genre mix, authors ---------- */
+.mix-scroll { overflow-x: auto; }
+.mix { border-collapse: separate; border-spacing: 3px; font-size: 14px; }
+.mix th { font-weight: 600; text-align: left; padding: 0 8px 0 0; white-space: nowrap; }
+.mix thead th { text-align: center; color: var(--mute); font-size: 13px; padding: 0; }
+.mix td { padding: 0; }
+.mix-cell { display: grid; place-items: center; width: 48px; min-height: 36px; border-radius: 4px; font-weight: 600; font-size: 13px; color: var(--ink); background: color-mix(in srgb, var(--ink-genre, var(--mute)) calc(var(--share, 0) * 45%), transparent); }
+button.mix-cell[aria-pressed='true'] { box-shadow: 0 0 0 2px var(--ink); }
+.st-rank .auth-row { grid-template-columns: 28px minmax(0, 1fr) auto 32px; }
+.auth-avg { font-size: 13px; color: var(--mute); white-space: nowrap; }

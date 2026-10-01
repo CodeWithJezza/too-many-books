@@ -4,8 +4,10 @@ import { defaultQuery, noFacets, workFacetsOk, type Facets, type LibraryQuery } 
 import { buildSeries } from '../lib/series'
 import { StatsCompare } from './StatsCompare'
 import { computeLoanStats } from '../lib/loanStats'
+import { computeAuthors } from '../lib/authors'
 import { computePageStats } from '../lib/pages'
-import { setShowPages, useShowPages } from '../settings'
+import { computeTrends } from '../lib/trends'
+import { setChart, useChart } from '../settings'
 import { computeStats, type Key, type YearFilter } from '../lib/stats'
 import { useReadingData } from '../storage'
 import type { Format, GenreId } from '../types'
@@ -37,12 +39,17 @@ export function Stats({ onOpenLibrary }: { onOpenLibrary: (q: LibraryQuery) => v
   const [sel, setSel] = useState<Selection | undefined>()
   const s = useMemo(() => (data ? computeStats(data.readings, data.works, year, facets) : undefined), [data, year, facets])
   const ls = useMemo(() => (data ? computeLoanStats(data.loans, data.readings, data.works, year, facets) : undefined), [data, year, facets])
-  const showPages = useShowPages()
+  const showPages = useChart('pages')
+  const showTrends = useChart('trends')
+  const showAuthors = useChart('authors')
   const ps = useMemo(() => (data && showPages ? computePageStats(data.readings, data.works, year, facets) : undefined), [data, showPages, year, facets])
   const seriesList = useMemo(() => buildSeries(data?.works ?? [], data?.readings ?? []), [data])
   // Series progress counts volumes (Works), narrowed by genre, tag and series only.
   const seriesShown = useMemo(() => buildSeries((data?.works ?? []).filter((w) => workFacetsOk(w, facets)), data?.readings ?? []).filter((s) => s.owned > 1 || s.gaps > 0), [data, facets])
   const [allSeries, setAllSeries] = useState(false)
+  const trends = useMemo(() => (data && showTrends ? computeTrends(data.readings, data.works, facets) : undefined), [data, showTrends, facets])
+  const authorStats = useMemo(() => (data && showAuthors ? computeAuthors(data.readings, data.works, year, facets) : undefined), [data, showAuthors, year, facets])
+  const [allAuthors, setAllAuthors] = useState(false)
   const tags = useMemo(() => [...new Set((data?.works ?? []).flatMap((w) => w.tags))].sort(), [data])
   const facetsOn = JSON.stringify(facets) !== JSON.stringify(noFacets)
   const setFacet = <K extends keyof Facets>(k: K, v: Facets[K]) => { setFacets((f) => ({ ...f, [k]: v })); setSel(undefined) }
@@ -348,6 +355,98 @@ export function Stats({ onOpenLibrary }: { onOpenLibrary: (q: LibraryQuery) => v
         </>
       )}
 
+      {trends && trends.years.length > 0 && (
+        <>
+          <h2 className="set-title st-section">Over the years</h2>
+          <p className="hint">Each year counts finished readings. Unrated readings are left out of the average, not counted as low. Ignores the year buttons and follows the filters.{trends.undated > 0 && <> {trends.undated} finished {trends.undated === 1 ? 'reading has' : 'readings have'} no finish date and {trends.undated === 1 ? 'is' : 'are'} in no year.</>}</p>
+          <div className="st-grid">
+            <section className="st-card" aria-labelledby="st-avg">
+              <h2 id="st-avg" className="set-title">Average rating</h2>
+              <ul className="st-bars">
+                {trends.years.map((y) => (
+                  <li key={y.year} className={on(`t${y.year}`) ? 'on' : ''}>
+                    <button type="button" className="st-row" aria-pressed={on(`t${y.year}`) ?? false} aria-label={`${y.year}: ${y.average === undefined ? 'nothing rated' : `average ${y.average.toFixed(1)}`}, ${y.rated} rated and ${y.unrated} unrated`} onClick={() => pick({ id: `t${y.year}`, label: `Finished in ${y.year}`, count: y.finished, patch: { year: y.year } })}>
+                      <span className="st-bl">{y.year}</span>
+                      <span className="st-track">{y.average !== undefined && <span className="st-fill" style={{ width: `${(y.average / 5) * 100}%` }} />}</span>
+                      <span className="st-bn">{y.average === undefined ? '–' : y.average.toFixed(1)}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+              <p className="hint">Out of 5. {trends.years.some((y) => y.unrated > 0) ? 'Rated and unrated: ' + trends.years.map((y) => `${y.year} ${y.rated}/${y.unrated}`).join(', ') + '.' : 'Every reading is rated.'}</p>
+            </section>
+
+            <section className="st-card" aria-labelledby="st-mix">
+              <h2 id="st-mix" className="set-title">Genre mix</h2>
+              <div className="mix-scroll">
+                <table className="mix">
+                  <caption className="sr-only">Share of each year's books that include each genre</caption>
+                  <thead><tr><th scope="col"><span className="sr-only">Genre</span></th>{trends.years.map((y) => <th scope="col" key={y.year}>{y.year}</th>)}</tr></thead>
+                  <tbody>
+                    {trends.genreKeys.map((k) => (
+                      <tr key={k}>
+                        <th scope="row">{labelOf(k)}</th>
+                        {trends.years.map((y) => {
+                          const n = y.genres.get(k) ?? 0
+                          const share = y.finished ? n / y.finished : 0
+                          return (
+                            <td key={y.year}>
+                              {n === 0 || k === 'none' ? <span className="mix-cell" style={{ ['--share' as string]: share }}>{n === 0 ? '' : `${Math.round(share * 100)}%`}</span> : (
+                                <button type="button" className="mix-cell" style={{ ['--share' as string]: share, ['--ink-genre' as string]: inkOf(k) }} aria-pressed={on(`m${y.year}${k}`) ?? false} aria-label={`${labelOf(k)} ${y.year}: ${n} of ${y.finished} books`} onClick={() => pick({ id: `m${y.year}${k}`, label: `${labelOf(k)}, ${y.year}`, count: n, patch: { year: y.year, genre: k as GenreId } })}>{Math.round(share * 100)}%</button>
+                              )}
+                            </td>
+                          )
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p className="hint">Share of each year's books that include the genre. A book with several genres counts in each, so a column can add up to more than 100%.</p>
+            </section>
+          </div>
+        </>
+      )}
+
+      {authorStats && authorStats.ranking.length > 0 && (
+        <>
+          <h2 className="set-title st-section">Authors</h2>
+          <div className="st-grid">
+            <section className="st-card" aria-labelledby="st-allauth">
+              <h2 id="st-allauth" className="set-title">All authors {scope}</h2>
+              <ol className="st-rank">
+                {(allAuthors ? authorStats.ranking : authorStats.ranking.slice(0, 15)).map((a, i) => (
+                  <li key={a.author} className={on(`x${a.author}`) ? 'on' : ''}>
+                    <button type="button" className="st-row auth-row" aria-pressed={on(`x${a.author}`) ?? false} onClick={() => pick({ id: `x${a.author}`, label: a.author, count: a.count, patch: { text: a.author } })}>
+                      <span className="st-pos">{i + 1}</span>
+                      <span className="st-bl">{a.author}</span>
+                      <span className="auth-avg">{a.average === undefined ? 'unrated' : `${a.average.toFixed(1)} avg`}</span>
+                      <span className="st-bn">{a.count}</span>
+                    </button>
+                  </li>
+                ))}
+              </ol>
+              {authorStats.ranking.length > 15 && <button type="button" className="btn-link" onClick={() => setAllAuthors(!allAuthors)}>{allAuthors ? 'Show fewer' : `Show all ${authorStats.ranking.length} authors`}</button>}
+              <p className="hint">Authors are matched on the same name only, so different spellings count as different authors. {authorStats.noAuthor > 0 && <>{authorStats.noAuthor} finished {authorStats.noAuthor === 1 ? 'reading has' : 'readings have'} no author and {authorStats.noAuthor === 1 ? 'is' : 'are'} left out. </>}The average uses rated readings only.</p>
+            </section>
+
+            <section className="st-card" aria-labelledby="st-newauth">
+              <h2 id="st-newauth" className="set-title">New authors per year</h2>
+              <ul className="st-bars">
+                {authorStats.newPerYear.map((y) => (
+                  <li key={y.year}>
+                    <span className="st-bl">{y.year}</span>
+                    <span className="st-track"><span className="st-fill" style={{ width: `${(y.count / Math.max(1, ...authorStats.newPerYear.map((p) => p.count))) * 100}%` }} /></span>
+                    <span className="st-bn">{y.count}</span>
+                  </li>
+                ))}
+              </ul>
+              <p className="hint">An author is new in the year of their first finished book, counting every year. {authorStats.undatedOnly > 0 && <>{authorStats.undatedOnly} {authorStats.undatedOnly === 1 ? 'author has' : 'authors have'} only undated readings and {authorStats.undatedOnly === 1 ? 'is' : 'are'} in no year.</>}</p>
+            </section>
+          </div>
+        </>
+      )}
+
       {(ls.loanCount > 0 || ls.undated > 0 || ls.notFinished.length > 0 || ls.borrowed > 0) && (
         <>
           <h2 className="set-title st-section">Library loans</h2>
@@ -423,10 +522,12 @@ export function Stats({ onOpenLibrary }: { onOpenLibrary: (q: LibraryQuery) => v
 
       <section className="st-more-charts" aria-labelledby="st-optional">
         <h2 id="st-optional" className="set-title">More charts</h2>
-        <label className="check">
-          <input type="checkbox" checked={showPages} onChange={(e) => setShowPages(e.target.checked)} />
-          <span>Show pages read</span>
-        </label>
+        {([['pages', 'Show pages read', showPages], ['trends', 'Show rating and genre over the years', showTrends], ['authors', 'Show all authors and new authors', showAuthors]] as const).map(([c, label, checked]) => (
+          <label key={c} className="check">
+            <input type="checkbox" checked={checked} onChange={(e) => setChart(c, e.target.checked)} />
+            <span>{label}</span>
+          </label>
+        ))}
       </section>
     </main>
   )

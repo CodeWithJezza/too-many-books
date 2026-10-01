@@ -74,27 +74,28 @@ export function setLibraryView(v: LibraryView): void {
 export const useLibraryView = (): LibraryView => useSyncExternalStore(subscribe, getLibraryView)
 
 /** Optional Stats charts that start hidden. A per-device preference, kept in this browser. */
-const PAGES_KEY = 'tmb-stats-pages'
-let pagesMemory = false
+export type OptionalChart = 'pages' | 'trends' | 'authors'
+const chartMemory: Record<OptionalChart, boolean> = { pages: false, trends: false, authors: false }
+const chartKey = (c: OptionalChart) => `tmb-stats-${c}`
 
-export function getShowPages(): boolean {
+export function getChart(c: OptionalChart): boolean {
   try {
-    const v = globalThis.localStorage?.getItem(PAGES_KEY)
+    const v = globalThis.localStorage?.getItem(chartKey(c))
     if (v === '1' || v === '0') return v === '1'
   } catch {
     /* private mode: fall through to this session's value */
   }
-  return pagesMemory
+  return chartMemory[c]
 }
 
-export function setShowPages(on: boolean): void {
-  pagesMemory = on
+export function setChart(c: OptionalChart, on: boolean): void {
+  chartMemory[c] = on
   try {
-    globalThis.localStorage?.setItem(PAGES_KEY, on ? '1' : '0')
+    globalThis.localStorage?.setItem(chartKey(c), on ? '1' : '0')
   } catch {
     /* the choice still holds for this session */
   }
   globalThis.dispatchEvent?.(new Event(EVENT))
 }
 
-export const useShowPages = (): boolean => useSyncExternalStore(subscribe, getShowPages)
+export const useChart = (c: OptionalChart): boolean => useSyncExternalStore(subscribe, () => getChart(c))

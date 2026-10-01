@@ -12,6 +12,8 @@ Every Stats chart follows the same counting rules, and Stats and Library filter 
 
 **Filters.** One filter model serves both screens. Work-level facets (Genre, Tag, Series) describe the book. Reading-level facets (Rating, Format, Finish year and month, status) describe a read-through. A Work matches a Library filter when at least one of its Readings satisfies every Reading-level facet together, so "audiobook, rated 5" never matches an ebook rated 5 plus an unrelated audiobook. Stats applies the same facets to Readings, then counts the Readings that pass. Unrated is its own choice, not a low score; Finish year can be "unknown". Shelf applies to Library only, since Stats already counts finished Readings. A Series facet matches Works whose series name has the same key (case, articles and edition labels aside; (Manga) and (Light Novel) stay different).
 
+**Authors** are matched on the same name only, ignoring case and spacing. "Touya" and "Touya, chibi" are two authors until the reader merges them, and the app never merges them silently. Average ratings use rated Readings only; unrated is stated, never counted as low.
+
 **Series progress** counts volumes (Works), not Readings: a volume is read when any of its Readings is finished. It counts up to the highest volume held, shows whole-number gaps below it, and never counts a volume the app has not seen. Genre, Tag and Series narrow it; Rating and Format do not.
 
 **Drill-through.** Tapping a chart bar, segment or ranked row opens Library with the facets that produce that bar, shown as removable chips so the filter is never hidden.
