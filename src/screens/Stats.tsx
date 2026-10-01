@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { GENRES, NO_GENRE_INK, genre } from '../lib/genres'
+import { computeLoanStats } from '../lib/loanStats'
 import { computeStats, type Key, type YearFilter } from '../lib/stats'
 import { useReadingData } from '../storage'
 import type { Format } from '../types'
@@ -24,7 +25,9 @@ export function Stats() {
   const [year, setYear] = useState<YearFilter>('all')
   const s = useMemo(() => (data ? computeStats(data.readings, data.works, year) : undefined), [data, year])
 
-  if (!s) return <main className="library stats"><div className="lib-head"><h1>Stats</h1></div><p className="state" role="status">Counting your books…</p></main>
+  const ls = useMemo(() => (data ? computeLoanStats(data.loans, data.readings, data.works, year) : undefined), [data, year])
+
+  if (!s || !ls) return <main className="library stats"><div className="lib-head"><h1>Stats</h1></div><p className="state" role="status">Counting your books…</p></main>
   if (s.years.length === 0 && s.unknownDate === 0 && s.dnfCount === 0) {
     return (
       <main className="library stats">
@@ -184,6 +187,78 @@ export function Stats() {
           )}
         </section>
       </div>
+
+      {(ls.loanCount > 0 || ls.undated > 0 || ls.notFinished.length > 0 || ls.borrowed > 0) && (
+        <>
+          <h2 className="set-title st-section">Library loans</h2>
+          <p className="st-summary">{ls.loanCount} {ls.loanCount === 1 ? 'loan' : 'loans'} {scope}</p>
+          {ls.undated > 0 && <p className="hint">{ls.undated} {ls.undated === 1 ? 'loan has' : 'loans have'} no borrow date and {ls.undated === 1 ? 'is' : 'are'} left out of the year and month views.</p>}
+          <div className="st-grid">
+            <section className="st-card st-wide" aria-labelledby="st-loans">
+              <h2 id="st-loans" className="set-title">Loans {year === 'all' ? 'per year' : `per month, ${year}`}</h2>
+              {year === 'all' ? (
+                <>
+                  <ul className="st-bars">
+                    {ls.perYear.map((y) => (
+                      <li key={y.year}>
+                        <span className="st-bl">{y.year}</span>
+                        <span className="st-track"><span className="st-fill" style={{ width: `${(y.count / Math.max(1, ...ls.perYear.map((p) => p.count))) * 100}%` }} /></span>
+                        <span className="st-bn">{y.count}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              ) : (
+                <>
+                  <div className="st-cols months" aria-hidden="true">
+                    {ls.perMonth.map((n, i) => (
+                      <div key={i} className="st-col">
+                        <span className="st-n">{n || ''}</span>
+                        <span className="st-rbar" style={{ height: `${(n / Math.max(1, ...ls.perMonth)) * 120}px` }} />
+                        <span className="st-l">{MONTHS[i]}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <table className="sr-only">
+                    <caption>Loans per month in {year}</caption>
+                    <tbody>{ls.perMonth.map((n, i) => <tr key={i}><th>{MONTHS[i]}</th><td>{n}</td></tr>)}</tbody>
+                  </table>
+                  {ls.monthUnknown > 0 && <p className="hint">{ls.monthUnknown} borrowed in {year} {ls.monthUnknown === 1 ? 'is' : 'are'} recorded only to the year, so {ls.monthUnknown === 1 ? 'it is' : 'they are'} not in a month.</p>}
+                </>
+              )}
+            </section>
+
+            <section className="st-card" aria-labelledby="st-libs">
+              <h2 id="st-libs" className="set-title">Libraries</h2>
+              {ls.libraries.length === 0 ? <p className="hint">No library names to rank {scope}.</p> : (
+                <ol className="st-rank">
+                  {ls.libraries.map((l, i) => <li key={l.library}><span className="st-pos">{i + 1}</span><span className="st-bl">{l.library}</span><span className="st-bn">{l.count}</span></li>)}
+                </ol>
+              )}
+              {ls.noLibrary > 0 && <p className="hint">{ls.noLibrary} {ls.noLibrary === 1 ? 'loan names' : 'loans name'} no library.</p>}
+            </section>
+
+            <section className="st-card" aria-labelledby="st-bor">
+              <h2 id="st-bor" className="set-title">Borrowed readings</h2>
+              <p className="st-big">{ls.borrowed} <span>of {ls.borrowed + ls.noLoan} finished {scope}</span></p>
+              <p className="hint">A reading counts as borrowed when a loan is tied to it. The other {ls.noLoan} have no loan recorded, which does not mean you own them.</p>
+              {ls.unlinked > 0 && <p className="hint">{ls.unlinked} of those {ls.unlinked === 1 ? 'is a reading' : 'are readings'} of books you have loans for, but no loan is tied to {ls.unlinked === 1 ? 'it' : 'them'}. Edit a reading to tie one.</p>}
+            </section>
+
+            <section className="st-card" aria-labelledby="st-nf">
+              <h2 id="st-nf" className="set-title">Borrowed, not finished</h2>
+              <p className="st-big">{ls.notFinished.length} <span>{ls.notFinished.length === 1 ? 'book' : 'books'}, across all years</span></p>
+              {ls.notFinished.length > 0 && (
+                <details className="st-more">
+                  <summary>Show the books</summary>
+                  <ul className="st-list">{ls.notFinished.map((w) => <li key={w.id}>{w.title}{w.author && <span> · {w.author}</span>}</li>)}</ul>
+                </details>
+              )}
+              <p className="hint">Books with a loan and no finished reading. Borrowing is not reading, and this is not a backlog to clear.</p>
+            </section>
+          </div>
+        </>
+      )}
     </main>
   )
 }

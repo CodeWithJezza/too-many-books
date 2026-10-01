@@ -314,8 +314,8 @@ export async function setDismissed(recordIds: number[], dismissed: boolean, stor
 }
 
 /** Everything Stats needs; undefined while loading. */
-export function useReadingData(): { readings: Reading[]; works: Work[] } | undefined {
-  return useLiveQuery(async () => ({ readings: await db.readings.toArray(), works: await db.works.toArray() }), [])
+export function useReadingData(): { readings: Reading[]; works: Work[]; loans: Loan[] } | undefined {
+  return useLiveQuery(async () => ({ readings: await db.readings.toArray(), works: await db.works.toArray(), loans: await db.loans.toArray() }), [])
 }
 
 export function useGoodreads(state: RecordState): GoodreadsRecord[] | undefined {
