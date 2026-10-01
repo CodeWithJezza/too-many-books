@@ -22,12 +22,15 @@ const TABS: { id: Exclude<Tab, 'add'>; label: string; icon: IconName }[] = [
 ]
 
 type Theme = 'light' | 'dark'
+/** A theme the reader chose wins; otherwise the device's own light or dark setting. */
 function readTheme(): Theme {
   try {
-    return localStorage.getItem('tmb-theme') === 'dark' ? 'dark' : 'light'
+    const saved = localStorage.getItem('tmb-theme')
+    if (saved === 'dark' || saved === 'light') return saved
   } catch {
-    return 'light'
+    /* private mode: fall through to the device setting */
   }
+  return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
 }
 
 export default function App() {
