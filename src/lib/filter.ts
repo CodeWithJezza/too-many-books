@@ -1,5 +1,6 @@
 import type { Format, GenreId, Reading, ReadingStatus, Work, WorkSummary } from '../types'
 import { dateKey } from './dates'
+import { seriesNameKey } from './series'
 
 export type ShelfFilter = 'all' | 'reading' | 'read' | 'want' | 'dnf'
 export type SortKey = 'recent' | 'title' | 'author' | 'rating'
@@ -13,12 +14,16 @@ export interface Facets {
   tag: string | 'any'
   rating: number | 'unrated' | 'any'
   format: Format | 'any'
+  /** A Series name; matches any Work whose series has the same name key. */
+  series: string | 'any'
 }
 
-export const noFacets: Facets = { genre: 'any', tag: 'any', rating: 'any', format: 'any' }
+export const noFacets: Facets = { genre: 'any', tag: 'any', rating: 'any', format: 'any', series: 'any' }
 
-export const workFacetsOk = (w: Pick<Work, 'genres' | 'tags'>, f: Facets): boolean =>
-  (f.genre === 'any' || w.genres.includes(f.genre)) && (f.tag === 'any' || w.tags.includes(f.tag))
+export const workFacetsOk = (w: Pick<Work, 'genres' | 'tags' | 'series'>, f: Facets): boolean =>
+  (f.genre === 'any' || w.genres.includes(f.genre)) &&
+  (f.tag === 'any' || w.tags.includes(f.tag)) &&
+  (f.series === 'any' || (!!w.series && seriesNameKey(w.series.name) === seriesNameKey(f.series)))
 
 export const readingFacetsOk = (r: Pick<Reading, 'rating' | 'format'>, f: Facets): boolean =>
   (f.rating === 'any' || (f.rating === 'unrated' ? r.rating === undefined : r.rating === f.rating)) && (f.format === 'any' || r.format === f.format)
@@ -63,7 +68,7 @@ export const readingFiltered = (q: LibraryQuery): boolean =>
 
 /** True when anything differs from the unfiltered Library. */
 export const isFiltered = (q: LibraryQuery): boolean =>
-  q.text !== '' || q.shelf !== 'all' || q.genre !== 'any' || q.tag !== 'any' || q.missing !== 'any' || readingFiltered(q)
+  q.text !== '' || q.shelf !== 'all' || q.genre !== 'any' || q.tag !== 'any' || q.series !== 'any' || q.missing !== 'any' || readingFiltered(q)
 
 export function onShelf(w: WorkSummary, shelf: ShelfFilter): boolean {
   switch (shelf) {

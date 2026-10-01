@@ -119,7 +119,7 @@ export type AddStatus = ReadingStatus | 'want'
 export interface AddInput {
   /** Attach to an existing Work, or create one from these fields. Never both. */
   workId?: number
-  newWork?: Pick<Work, 'title' | 'author' | 'genres' | 'pageCount' | 'coverUrl' | 'externalIds'> & { tags?: string[] }
+  newWork?: Pick<Work, 'title' | 'author' | 'genres' | 'pageCount' | 'coverUrl' | 'externalIds' | 'series'> & { tags?: string[] }
   status: AddStatus
   reading?: Pick<Reading, 'format' | 'start' | 'finish' | 'rating' | 'review'>
   /** Records that this Reading was borrowed from a library. Ignored for Want to read. */
@@ -240,6 +240,7 @@ export type Resolution =
 
 /** Reader-confirmed or cache-derived details, applied only when this resolve creates the Work. */
 export interface NewWorkDetails {
+  series?: { name: string; position: number }
   genres?: GenreId[]
   tags?: string[]
   pageCount?: number
@@ -299,6 +300,7 @@ export async function resolveGroupWithReceipt(input: ResolveInput, store: Librar
         author: newest.author,
         genres: input.details?.genres ?? [],
         tags: input.details?.tags ?? [],
+        series: input.details?.series,
         shelves: input.resolution.kind === 'want' ? ['want'] : [],
         coverUrl: newest.coverUrl ?? input.details?.coverUrl,
         pageCount: input.details?.pageCount,

@@ -473,3 +473,19 @@ button.st-seg { min-height: 22px; }
 @media (max-width: 759px) { .letter-index { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; } }
 .st-more-charts { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule); }
 .tag-pick { --ink-genre: var(--ink); }
+
+/* ---------- series ---------- */
+.series-row { display: flex; align-items: center; gap: 12px; }
+.series-pos { flex: none; min-width: 42px; font-weight: 700; color: var(--cardmute); }
+.series-open { display: flex; flex: 1; align-items: center; justify-content: space-between; gap: 10px; min-height: 44px; text-align: left; min-width: 0; }
+.series-open .row-title { overflow: hidden; text-overflow: ellipsis; }
+.series-gap { flex: 1; color: var(--cardmute); font-style: italic; }
+.series-row.is-gap { background: transparent; border-bottom: 1px dashed var(--rule); color: var(--ink); }
+.row-tag.is-read { background: var(--cardink); color: var(--card); border-color: var(--cardink); }
+.st-series { display: grid; gap: 4px; }
+.series-line { grid-template-columns: minmax(0, 1.2fr) minmax(0, 2fr) 48px; }
+.series-dots { display: flex; flex-wrap: wrap; gap: 4px; }
+.dot { display: inline-block; width: 12px; height: 12px; border: 2px solid var(--ink); border-radius: 2px; box-sizing: border-box; }
+.dot.read { background: var(--ink); }
+.dot.gap { border-style: dashed; border-color: var(--mute); }
+.st-legend .dot { margin-right: 8px; vertical-align: -2px; }

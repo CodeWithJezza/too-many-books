@@ -172,6 +172,16 @@ describe('same-title records with different title IDs', () => {
   })
 })
 
+describe('series from the Inbox', () => {
+  it('gives a new Work the series the reader confirmed, and none otherwise', async () => {
+    const db2 = new LibraryDB(`t-${Math.random()}`)
+    await importLibby(fixture, 'a.json', db2)
+    const recs = (await db2.importRecords.toArray()).filter((r) => r.titleId === '1001')
+    const workId = await resolveGroup({ recordIds: recs.map((r) => r.id!), resolution: { kind: 'want' }, details: { series: { name: 'S', position: 2 } } }, db2)
+    expect((await db2.works.get(workId))?.series).toEqual({ name: 'S', position: 2 })
+  })
+})
+
 describe('DNF from the Inbox', () => {
   it('makes a DNF Reading dated to the newest borrow month and keeps the Loans', async () => {
     const db2 = new LibraryDB(`t-${Math.random()}`)

@@ -6,6 +6,7 @@ import { Stars } from '../components/Stars'
 import { formatDate } from '../lib/dates'
 import { applyQuery, defaultQuery, isFiltered, sortLetter, isMissing, MISSING_LABEL, onShelf, type LibraryQuery, type Missing, type ShelfFilter, type SortKey } from '../lib/filter'
 import { GENRES, labelOf } from '../lib/genres'
+import { buildSeries } from '../lib/series'
 import { setLibraryView, useLibraryView, type LibraryView } from '../settings'
 import { clearSampleData } from '../storage'
 import type { Format, GenreId, WorkSummary } from '../types'
@@ -54,6 +55,7 @@ function activeChips(q: LibraryQuery): { key: string; label: string; clear: Part
   if (q.rating !== 'any') out.push({ key: 'rating', label: q.rating === 'unrated' ? 'Unrated' : `Rated ${q.rating}`, clear: { rating: 'any' } })
   if (q.format !== 'any') out.push({ key: 'format', label: FORMAT_LABEL[q.format], clear: { format: 'any' } })
   if (q.missing !== 'any') out.push({ key: 'missing', label: `Missing ${MISSING_LABEL[q.missing]}`, clear: { missing: 'any' } })
+  if (q.series !== 'any') out.push({ key: 'series', label: `Series: ${q.series}`, clear: { series: 'any' } })
   if (q.tag !== 'any') out.push({ key: 'tag', label: `Tag: ${q.tag}`, clear: { tag: 'any' } })
   return out
 }
@@ -79,6 +81,7 @@ export function Library({ works, query: q, onQuery: setQ, selectedId, onSelect, 
   const tags = useMemo(() => [...new Set((works ?? []).flatMap((w) => w.tags))].sort(), [works])
   const years = useMemo(() => [...new Set((works ?? []).flatMap((w) => (w.readings ?? []).map((r) => r.finish?.y)).filter((y): y is number => y !== undefined))].sort((a, b) => b - a), [works])
   const [moreOpen, setMoreOpen] = useState(false)
+  const seriesNames = useMemo(() => buildSeries(works ?? [], []).map((s) => s.name), [works])
   const view = useLibraryView()
   // The first book under each letter, so the index can jump to it.
   const firstOf = useMemo(() => {
@@ -156,6 +159,15 @@ export function Library({ works, query: q, onQuery: setQ, selectedId, onSelect, 
               {tags.map((t) => <option key={t} value={t}>{t}</option>)}
             </select>
           </label>
+          {seriesNames.length > 0 && (
+            <label className="select">
+              <span className="sr-only">Series</span>
+              <select value={q.series} onChange={(e) => set('series', e.target.value)}>
+                <option value="any">All series</option>
+                {seriesNames.map((n) => <option key={n} value={n}>{n}</option>)}
+              </select>
+            </label>
+          )}
           <label className="select">
             <span className="sr-only">Rating</span>
             <select value={String(q.rating)} onChange={(e) => set('rating', e.target.value === 'any' || e.target.value === 'unrated' ? e.target.value : Number(e.target.value))}>

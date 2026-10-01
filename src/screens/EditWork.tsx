@@ -6,6 +6,7 @@ import { Jacket } from '../components/Jacket'
 import { StarsInput } from '../components/StarsInput'
 import { fromDatePart, todayIso, toDatePart, withPrecision, type Precision } from '../lib/dates'
 import { GENRES } from '../lib/genres'
+import { parseVolume } from '../lib/series'
 import { deleteWork, saveWorkEdits, useLibraryNames, useWorkDetail, useWorksRaw, type ReadingEdit } from '../storage'
 import type { Format, GenreId, ReadingStatus, WorkSummary } from '../types'
 
@@ -207,6 +208,11 @@ export function EditWork({ id, onClose, onDeleted, onDirty, leaveRequested, onLe
               <input id="e-pages" className="input" inputMode="numeric" placeholder="Optional" value={pages} onChange={(e) => setPages(e.target.value)} aria-invalid={!pagesOk} />
             </div>
           </div>
+          {!seriesName.trim() && parseVolume(title) && (
+            <p className="hint">
+              <button type="button" className="btn-link inline" onClick={() => { const v = parseVolume(title)!; setSeriesName(v.name); setSeriesPos(String(v.position)) }}>Use “{parseVolume(title)!.name} #{parseVolume(title)!.position}”</button> as the series, from the title.
+            </p>
+          )}
           {(!posOk || !pagesOk) && <p className="form-error" role="alert">{!posOk ? (seriesPos === '' ? 'Enter the book’s position in the series, such as 2 or 2.5, or clear the series name.' : 'Series position must be a number, such as 2 or 2.5.') : 'Pages must be a whole number.'}</p>}
 
           <label className="check">

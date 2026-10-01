@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { computeStats } from './stats'
+import { noFacets } from './filter'
 import type { Reading, Work } from '../types'
 
 const work = (id: number, author: string, genres: Work['genres'] = []): Work => ({ id, title: `T${id}`, author, genres, tags: [], shelves: [] })
@@ -58,14 +59,14 @@ describe('computeStats', () => {
 
 describe('computeStats facets', () => {
   it('narrows every chart to the same Readings, and unrated is its own facet', () => {
-    const f = { genre: 'any', tag: 'any', rating: 'any', format: 'audiobook' } as const
+    const f = { ...noFacets, format: 'audiobook' } as const
     const s = computeStats(readings, works, 'all', f)
     expect(s.finishedCount).toBe(1)
     expect(s.years).toEqual([2026])
-    expect(computeStats(readings, works, 'all', { ...f, format: 'any', rating: 'unrated' }).finishedCount).toBe(2)
+    expect(computeStats(readings, works, 'all', { ...noFacets, rating: 'unrated' }).finishedCount).toBe(2)
   })
   it('a Work facet drops other Works, and a Work with several genres matches each', () => {
-    const f = { genre: 'literary', tag: 'any', rating: 'any', format: 'any' } as const
+    const f = { ...noFacets, genre: 'literary' } as const
     expect(computeStats(readings, works, 'all', f).finishedCount).toBe(1)
   })
 })

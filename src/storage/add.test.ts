@@ -32,6 +32,10 @@ describe('addEntry', () => {
     expect(l).toMatchObject({ workId: id, readingId: r.id, source: 'manual', format: 'ebook', library: 'Sample County' })
     expect(l.borrowed).toBeUndefined()
   })
+  it('stores a confirmed series and position on the new Work', async () => {
+    const id = await addEntry({ newWork: { title: 'Saint, Vol. 4', author: '', genres: [], series: { name: 'Saint', position: 4 } }, status: 'want' }, db)
+    expect((await db.works.get(id))?.series).toEqual({ name: 'Saint', position: 4 })
+  })
   it('makes no loan for Want to read', async () => {
     await addEntry({ newWork: { title: 'Rebecca', author: '', genres: [] }, status: 'want', loan: { library: 'x' } }, db)
     expect(await db.loans.count()).toBe(0)

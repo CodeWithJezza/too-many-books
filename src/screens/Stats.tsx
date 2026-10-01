@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { GENRES, NO_GENRE_INK, genre } from '../lib/genres'
-import { defaultQuery, noFacets, type Facets, type LibraryQuery } from '../lib/filter'
+import { defaultQuery, noFacets, workFacetsOk, type Facets, type LibraryQuery } from '../lib/filter'
+import { buildSeries } from '../lib/series'
 import { computeLoanStats } from '../lib/loanStats'
 import { computePageStats } from '../lib/pages'
 import { setShowPages, useShowPages } from '../settings'
@@ -37,6 +38,10 @@ export function Stats({ onOpenLibrary }: { onOpenLibrary: (q: LibraryQuery) => v
   const ls = useMemo(() => (data ? computeLoanStats(data.loans, data.readings, data.works, year, facets) : undefined), [data, year, facets])
   const showPages = useShowPages()
   const ps = useMemo(() => (data && showPages ? computePageStats(data.readings, data.works, year, facets) : undefined), [data, showPages, year, facets])
+  const seriesList = useMemo(() => buildSeries(data?.works ?? [], data?.readings ?? []), [data])
+  // Series progress counts volumes (Works), narrowed by genre, tag and series only.
+  const seriesShown = useMemo(() => buildSeries((data?.works ?? []).filter((w) => workFacetsOk(w, facets)), data?.readings ?? []).filter((s) => s.owned > 1 || s.gaps > 0), [data, facets])
+  const [allSeries, setAllSeries] = useState(false)
   const tags = useMemo(() => [...new Set((data?.works ?? []).flatMap((w) => w.tags))].sort(), [data])
   const facetsOn = JSON.stringify(facets) !== JSON.stringify(noFacets)
   const setFacet = <K extends keyof Facets>(k: K, v: Facets[K]) => { setFacets((f) => ({ ...f, [k]: v })); setSel(undefined) }
@@ -95,6 +100,15 @@ export function Stats({ onOpenLibrary }: { onOpenLibrary: (q: LibraryQuery) => v
             {tags.map((t) => <option key={t} value={t}>{t}</option>)}
           </select>
         </label>
+        {seriesList.length > 0 && (
+          <label className="select">
+            <span className="sr-only">Series</span>
+            <select value={facets.series} onChange={(e) => setFacet('series', e.target.value)}>
+              <option value="any">All series</option>
+              {seriesList.map((s) => <option key={s.key} value={s.name}>{s.name}</option>)}
+            </select>
+          </label>
+        )}
         <label className="select">
           <span className="sr-only">Rating</span>
           <select value={String(facets.rating)} onChange={(e) => setFacet('rating', e.target.value === 'any' || e.target.value === 'unrated' ? e.target.value : Number(e.target.value))}>
@@ -266,6 +280,30 @@ export function Stats({ onOpenLibrary }: { onOpenLibrary: (q: LibraryQuery) => v
             </ol>
           )}
         </section>
+
+        {seriesShown.length > 0 && (
+          <section className="st-card st-wide" aria-labelledby="st-series">
+            <h2 id="st-series" className="set-title">Series progress</h2>
+            <ul className="st-series">
+              {(allSeries ? seriesShown : seriesShown.slice(0, 8)).map((s) => (
+                <li key={s.key}>
+                  <button type="button" className="st-row series-line" onClick={() => onOpenLibrary({ ...defaultQuery, series: s.name })} aria-label={`${s.name}: ${s.read} of ${s.owned + s.gaps} volumes read. Open in Library`}>
+                    <span className="st-bl">{s.name}</span>
+                    <span className="series-dots" aria-hidden="true">
+                      {s.entries.map((e, i) => <span key={i} className={`dot${e.gap ? ' gap' : e.read ? ' read' : ''}`} />)}
+                    </span>
+                    <span className="st-bn">{s.read}/{s.owned + s.gaps}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+            {seriesShown.length > 8 && <button type="button" className="btn-link" onClick={() => setAllSeries(!allSeries)}>{allSeries ? 'Show fewer' : `Show all ${seriesShown.length} series`}</button>}
+            <ul className="st-legend" aria-label="Series key">
+              <li><span className="dot read" />Read</li><li><span className="dot" />In library, not read</li><li><span className="dot gap" />Not in library</li>
+            </ul>
+            <p className="hint">Counts volumes, not readings. Only series with more than one volume or a gap are shown, and gaps are whole-number volumes below your highest. The real length of a series is not known.</p>
+          </section>
+        )}
       </div>
       )}
 

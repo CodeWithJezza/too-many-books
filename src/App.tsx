@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'reac
 import { applyUpdate, dismissOffline, pwaState, subscribePwa } from './pwa'
 import { applyQuery, defaultQuery, type LibraryQuery } from './lib/filter'
 import { Icon, type IconName } from './components/Icon'
-import { Add } from './screens/Add'
+import { Add, type AddPrefill } from './screens/Add'
+import { SeriesPanel } from './screens/SeriesPanel'
 import { EditWork } from './screens/EditWork'
 import { Inbox } from './screens/Inbox'
 import { Library } from './screens/Library'
@@ -39,6 +40,8 @@ export default function App() {
   const [tab, setTab] = useState<Tab>('library')
   const [selectedId, setSelectedId] = useState<number | undefined>()
   const [query, setQuery] = useState<LibraryQuery>(defaultQuery)
+  const [seriesName, setSeriesName] = useState<string | undefined>()
+  const [addPrefill, setAddPrefill] = useState<AddPrefill | undefined>()
   const [editId, setEditId] = useState<number | undefined>()
   const [editDirty, setEditDirty] = useState(false)
   const [leaveTo, setLeaveTo] = useState<(() => void) | undefined>()
@@ -121,7 +124,7 @@ export default function App() {
             </li>
           ))}
         </ul>
-        <button type="button" className="add" onClick={() => go(() => setTab('add'))} aria-current={tab === 'add' && editId === undefined ? 'page' : undefined}>
+        <button type="button" className="add" onClick={() => go(() => { setAddPrefill(undefined); setTab('add') })} aria-current={tab === 'add' && editId === undefined ? 'page' : undefined}>
           <Icon name="plus" size={18} /><span className="add-full">Add a book</span><span className="add-short">Add</span>
         </button>
         <button type="button" className="theme" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
@@ -143,14 +146,24 @@ export default function App() {
       {editId === undefined && tab === 'library' && (
         <>
           <Library works={works} query={query} onQuery={setQuery} selectedId={selectedId} onSelect={setSelectedId} sample={sample} onOpenSettings={() => setTab('settings')} />
-          <WorkPanel id={selectedId} onClose={() => setSelectedId(undefined)} onEdit={setEditId} />
+          {seriesName !== undefined ? (
+            <SeriesPanel
+              name={seriesName}
+              onClose={() => setSeriesName(undefined)}
+              onSelect={(id) => { setSelectedId(id); setSeriesName(undefined) }}
+              onAddGap={(s) => { setAddPrefill({ title: `${s.name}, Volume ${s.position}`, series: s }); setSeriesName(undefined); setTab('add') }}
+              onShowInLibrary={(name) => { setQuery({ ...defaultQuery, series: name }); setSeriesName(undefined); setSelectedId(undefined) }}
+            />
+          ) : (
+            <WorkPanel id={selectedId} onClose={() => setSelectedId(undefined)} onEdit={setEditId} onOpenSeries={setSeriesName} />
+          )}
         </>
       )}
       {editId === undefined && tab === 'library' && panelOpen && <div className="scrim" onClick={() => setSelectedId(undefined)} aria-hidden="true" />}
       {editId === undefined && tab === 'inbox' && <Inbox />}
       {editId === undefined && tab === 'stats' && <Stats onOpenLibrary={(q) => { setQuery(q); setSelectedId(undefined); setTab('library') }} />}
       {editId === undefined && tab === 'settings' && <Settings />}
-      {editId === undefined && tab === 'add' && <Add onSaved={(id) => { setSelectedId(id); setTab('library') }} />}
+      {editId === undefined && tab === 'add' && <Add prefill={addPrefill} onSaved={(id) => { setAddPrefill(undefined); setSelectedId(id); setTab('library') }} />}
       {pwa.includes('u') && (
         <p className="toast" role="status">A new version is ready. <button type="button" className="btn-link inline" onClick={() => void applyUpdate()}>Reload</button></p>
       )}

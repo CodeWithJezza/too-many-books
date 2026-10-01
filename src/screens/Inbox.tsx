@@ -5,6 +5,7 @@ import { formatDate } from '../lib/dates'
 import { GENRES } from '../lib/genres'
 import { useLookup, useSeriesLookup } from '../import/lookup'
 import { LookupLine } from '../components/LookupLine'
+import { parseVolume } from '../lib/series'
 import { suggestGenres, suggestTags } from '../metadata/suggest'
 import { buildGroups, isClean, type InboxGroup } from '../lib/inbox'
 import { ImportFormatError } from '../import/libby'
@@ -40,6 +41,8 @@ function GroupRow({ group, dismissed, onResolved }: { group: InboxGroup; dismiss
   const [genres, setGenres] = useState<GenreId[]>([])
   const [showGenres, setShowGenres] = useState(false)
   const [tags, setTags] = useState<string[]>([])
+  const volume = parseVolume(group.title)
+  const [seriesOn, setSeriesOn] = useState(false)
 
   const ids = group.records.map((r) => r.id!)
   const match = group.match
@@ -56,7 +59,7 @@ function GroupRow({ group, dismissed, onResolved }: { group: InboxGroup; dismiss
   const seriesHit = series.lookup.hit
   const suggested = [...new Set([...(hit ? suggestGenres(hit.subjects) : []), ...(seriesHit ? suggestGenres(seriesHit.subjects) : [])])]
   const details = makesNewWork
-    ? { genres, tags, pageCount: hit?.pageCount, coverUrl: hit?.coverUrl, openLibrary: hit?.key, isbn: hit?.isbns }
+    ? { genres, tags, series: seriesOn ? volume : undefined, pageCount: hit?.pageCount, coverUrl: hit?.coverUrl, openLibrary: hit?.key, isbn: hit?.isbns }
     : undefined
 
   async function resolve(input: ResolveInput, what: string) {
@@ -118,6 +121,11 @@ function GroupRow({ group, dismissed, onResolved }: { group: InboxGroup; dismiss
                 return <button key={f.tag} type="button" className="genre-pick sm tag-pick" aria-pressed={on} onClick={() => setTags(on ? tags.filter((x) => x !== f.tag) : [...tags.filter((x) => x !== 'light novel' && x !== 'manga'), f.tag])}>{f.label}{suggestedTags.includes(f.tag) && <span className="sug"> · suggested</span>}</button>
               })}
             </div>
+            {volume && (
+              <div className="genre-picks" role="group" aria-label={`Series for ${group.title}`}>
+                <button type="button" className="genre-pick sm tag-pick" aria-pressed={seriesOn} onClick={() => setSeriesOn(!seriesOn)}>Series: {volume.name} #{volume.position}<span className="sug"> · suggested</span></button>
+              </div>
+            )}
             {form && series.mode === 'ask' && series.lookup.state === 'idle' && <button type="button" className="btn-link" onClick={series.run}>Look up genres on AniList</button>}
             {form && series.mode !== 'off' && series.lookup.state !== 'idle' && (
               <p className="ib-lookup">

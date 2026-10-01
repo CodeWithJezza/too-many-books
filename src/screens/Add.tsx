@@ -8,6 +8,7 @@ import { toDatePart, todayIso, withPrecision, type Precision } from '../lib/date
 
 import { GENRES } from '../lib/genres'
 import { matchHit, searchLibrary } from '../lib/match'
+import { parseVolume, type SeriesRef } from '../lib/series'
 import { suggestGenres, suggestTags } from '../metadata/suggest'
 import type { MetadataHit } from '../metadata/types'
 import { useLookupMode } from '../settings'
@@ -35,9 +36,13 @@ const previewWork = (title: string, author: string, genres: GenreId[], coverUrl?
   id: 0, title, author, genres, tags: [], shelves: [], readingCount: 0, coverUrl,
 })
 
-export function Add({ onSaved }: { onSaved: (workId: number) => void }) {
+/** A volume to add, handed over from a Series page's gap. */
+export interface AddPrefill { title: string; series: SeriesRef }
+
+export function Add({ onSaved, prefill }: { onSaved: (workId: number) => void; prefill?: AddPrefill }) {
   const works = useWorksRaw()
-  const [text, setText] = useState('')
+  const [text, setText] = useState(prefill?.title ?? '')
+  const [seriesOn, setSeriesOn] = useState(!!prefill)
   const [picked, setPicked] = useState<Pick | undefined>()
   const [author, setAuthor] = useState('')
   const [genres, setGenres] = useState<GenreId[]>([])
@@ -125,6 +130,7 @@ export function Add({ onSaved }: { onSaved: (workId: number) => void }) {
   }
 
   const suggested = picked?.kind === 'hit' ? suggestGenres(picked.hit.subjects) : []
+  const volume = prefill?.series ?? (picked && picked.kind !== 'existing' ? parseVolume(text) : undefined)
   const suggestedTags = picked && picked.kind !== 'existing' ? suggestTags(text, picked.kind === 'hit' ? picked.hit.subjects : []) : []
   const FORMS = [{ tag: 'light novel', label: 'Light novel' }, { tag: 'manga', label: 'Manga' }]
   const readingFields = status !== 'want'
@@ -166,6 +172,7 @@ export function Add({ onSaved }: { onSaved: (workId: number) => void }) {
                 author,
                 genres,
                 tags,
+                series: seriesOn ? volume : undefined,
                 pageCount: picked.kind === 'hit' ? picked.hit.pageCount : undefined,
                 coverUrl: picked.kind === 'hit' ? picked.hit.coverUrl : undefined,
                 externalIds: picked.kind === 'hit' ? { openLibrary: [picked.hit.key], isbn: picked.hit.isbns } : undefined,
@@ -320,6 +327,15 @@ export function Add({ onSaved }: { onSaved: (workId: number) => void }) {
                 const on = tags.includes(f.tag)
                 return <button key={f.tag} type="button" className="genre-pick tag-pick" aria-pressed={on} onClick={() => setTags(on ? tags.filter((x) => x !== f.tag) : [...tags.filter((x) => x !== 'light novel' && x !== 'manga'), f.tag])}>{f.label}{suggestedTags.includes(f.tag) && <span className="sug"> · suggested</span>}</button>
               })}
+            </div>
+          </fieldset>
+        )}
+
+        {picked && picked.kind !== 'existing' && volume && (
+          <fieldset className="field">
+            <legend>Series <span className="hint-inline">{prefill ? 'from the Series page' : 'suggested from the title'}</span></legend>
+            <div className="genre-picks">
+              <button type="button" className="genre-pick tag-pick" aria-pressed={seriesOn} onClick={() => setSeriesOn(!seriesOn)}>{volume.name} #{volume.position}</button>
             </div>
           </fieldset>
         )}
