@@ -318,11 +318,12 @@ textarea.input { resize: vertical; line-height: 1.45; }
 .jacket-preview .jacket-title { font-size: 24px; }
 .form-actions.sticky { position: sticky; bottom: 0; z-index: 2; padding: 14px 0; background: var(--bg); border-top: 1px solid var(--rule); }
 @media (max-width: 759px) { .form-actions.sticky { bottom: calc(64px + env(safe-area-inset-bottom)); } }
-.ib-dock { position: sticky; bottom: 0; z-index: 3; display: flex; flex-wrap: wrap; gap: 4px 16px; align-items: center; margin-top: 16px; padding: 10px 16px; background: var(--ink); color: var(--bg); border-radius: 6px; box-shadow: 0 -2px 4px rgb(var(--shadow) / 0.12), 0 10px 24px rgb(var(--shadow) / 0.25); animation: panel-in 320ms var(--ease); }
+.ib-live { position: sticky; bottom: 0; z-index: 3; }
+.ib-dock { display: flex; flex-wrap: wrap; gap: 4px 16px; align-items: center; margin-top: 16px; padding: 10px 16px; background: var(--ink); color: var(--bg); border-radius: 6px; box-shadow: 0 -2px 4px rgb(var(--shadow) / 0.12), 0 10px 24px rgb(var(--shadow) / 0.25); animation: panel-in 320ms var(--ease); }
 .ib-dock p { flex: 1 1 22ch; min-width: 0; font-weight: 500; }
 .ib-tally { font-size: 14px; font-variant-numeric: tabular-nums; opacity: 0.8; }
 .ib-dock .btn-link { color: inherit; text-decoration-color: var(--accent); }
-@media (max-width: 759px) { .ib-dock { bottom: calc(72px + env(safe-area-inset-bottom)); } }
+@media (max-width: 759px) { .ib-live { bottom: calc(72px + env(safe-area-inset-bottom)); } }
 
 .ib-genres { display: grid; gap: 8px; margin-top: 10px; }
 .ib-lookup { font-size: 13px; color: var(--mute); min-height: 1.3em; }

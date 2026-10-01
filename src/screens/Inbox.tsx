@@ -9,7 +9,7 @@ import { parseVolume } from '../lib/series'
 import { suggestGenres, suggestTags } from '../metadata/suggest'
 import { buildGroups, isClean, type InboxGroup } from '../lib/inbox'
 import { ImportFormatError } from '../import/libby'
-import { importGoodreads } from '../storage/goodreads'
+import { importGoodreads, setGoodreadsDismissed } from '../storage/goodreads'
 import { GoodreadsFormatError } from '../import/goodreads'
 import { GoodreadsRow } from './GoodreadsRow'
 import { db, importLibby, resolveGroupWithReceipt, setDismissed, undoResolve, useGoodreads, useRecords, useWorksRaw, type ImportSummary, type ResolveReceipt, type ResolveInput } from '../storage'
@@ -213,6 +213,13 @@ export function Inbox({ onOpenStats }: { onOpenStats: () => void }) {
   // The last few actions, newest first, so a run of mis-taps can be walked back one at a time.
   const [undos, setUndos] = useState<{ text: string; run: () => Promise<void>; counts: number }[]>([])
   const [undoing, setUndoing] = useState(false)
+  const [confirmBulk, setConfirmBulk] = useState(false)
+  const listRef = useRef<HTMLUListElement>(null)
+  const dockUndoRef = useRef<HTMLButtonElement>(null)
+  // Which row the reader just acted on, so focus can land on the row that takes its place.
+  const actedIdx = useRef<number | undefined>(undefined)
+  const prevRows = useRef(0)
+  const focusUndo = useRef(false)
   const fileRef = useRef<HTMLInputElement>(null)
   const grFileRef = useRef<HTMLInputElement>(null)
 
@@ -220,6 +227,28 @@ export function Inbox({ onOpenStats }: { onOpenStats: () => void }) {
   const dismissedGroups = useMemo(() => buildGroups(dismissed ?? [], works), [dismissed, works])
   const clean = pendingGroups.filter(isClean)
   const groups = view === 'pending' ? pendingGroups : dismissedGroups
+  const rowCount = groups.length + ((view === 'pending' ? grPending : grDismissed)?.length ?? 0)
+
+  // After a bulk dismiss there is no row left to take focus, so it goes to Undo once that appears.
+  useEffect(() => {
+    if (focusUndo.current && undos.length > 0) {
+      focusUndo.current = false
+      dockUndoRef.current?.focus()
+    }
+  }, [undos])
+
+  // A row that is actioned leaves the list, which would drop keyboard focus to the page. Put it on the row that moves up.
+  useEffect(() => {
+    const idx = actedIdx.current
+    if (idx !== undefined && rowCount < prevRows.current) {
+      actedIdx.current = undefined
+      const rows = listRef.current?.querySelectorAll<HTMLElement>(':scope > li.ib-row')
+      const next = rows?.[Math.min(idx, rows.length - 1)]
+      const target = next?.querySelector<HTMLElement>('.btn-primary:not(:disabled)') ?? next?.querySelector<HTMLElement>('button:not(:disabled)')
+      ;(target ?? dockUndoRef.current)?.focus()
+    }
+    prevRows.current = rowCount
+  }, [rowCount])
 
   async function onFile(file: File | undefined) {
     if (!file) return
@@ -249,6 +278,8 @@ export function Inbox({ onOpenStats }: { onOpenStats: () => void }) {
   function remember(text: string, run: () => Promise<void>, counts = 0) {
     setNote(undefined)
     setError(undefined)
+    setSummary(undefined)
+    setGrSummary(undefined)
     setSorted((n) => n + counts)
     setUndos((u) => [{ text, run, counts }, ...u].slice(0, UNDO_DEPTH))
   }
@@ -270,6 +301,27 @@ export function Inbox({ onOpenStats }: { onOpenStats: () => void }) {
       async () => { for (const r of [...receipts].reverse()) await undoResolve(r) },
       receipts.length,
     )
+  }
+
+  /** Dismisses every row still waiting. Goodreads updates cannot be dismissed, so they stay. */
+  async function dismissRest() {
+    setConfirmBulk(false)
+    setError(undefined)
+    const ids = pendingGroups.flatMap((g) => g.records.map((r) => r.id!))
+    const grIds = (grPending ?? []).filter((r) => !r.applied).map((r) => r.id!)
+    try {
+      await setDismissed(ids, true)
+      await setGoodreadsDismissed(grIds, true, db)
+    } catch {
+      setError('That did not save. Nothing changed.')
+      return
+    }
+    const n = pendingGroups.length + grIds.length
+    focusUndo.current = true
+    remember(`Dismissed ${n} ${n === 1 ? 'book' : 'books'}. They are in Dismissed if you want any back.`, async () => {
+      await setDismissed(ids, false)
+      await setGoodreadsDismissed(grIds, false, db)
+    })
   }
 
   async function doUndo() {
@@ -326,7 +378,20 @@ export function Inbox({ onOpenStats }: { onOpenStats: () => void }) {
         {clean.length > 0 && view === 'pending' && (
           <button type="button" className="btn-quiet" onClick={() => void acceptClean()}>Link {clean.length} clean {clean.length === 1 ? 'match' : 'matches'}</button>
         )}
+        {view === 'pending' && rowCount > 1 && !confirmBulk && (
+          <button type="button" className="btn-quiet" onClick={() => setConfirmBulk(true)}>Dismiss the rest</button>
+        )}
       </div>
+      {confirmBulk && (
+        <div className="confirm" role="alertdialog" aria-labelledby="bulk-c">
+          <p id="bulk-c" className="confirm-title">Dismiss every book still waiting?</p>
+          <p>They move to Dismissed, where you can bring any back, and you can undo this right away.</p>
+          <div className="form-actions">
+            <button type="button" className="btn-primary" autoFocus onClick={() => void dismissRest()}>Dismiss {rowCount}</button>
+            <button type="button" className="btn-quiet" onClick={() => setConfirmBulk(false)}>Cancel</button>
+          </div>
+        </div>
+      )}
       <p className="hint ib-help">Libby: open Timeline, then Actions, then Export timeline, and choose JSON. Only borrows are read. Goodreads: on goodreads.com choose My Books, then Import and export, then Export Library, and pick the .csv file.</p>
 
       {summary && (
@@ -358,7 +423,11 @@ export function Inbox({ onOpenStats }: { onOpenStats: () => void }) {
           )}
         </div>
       ) : (
-        <ul className="ib-list" aria-label={view === 'pending' ? 'Books to review' : 'Dismissed books'}>
+        <ul ref={listRef} className="ib-list" onClickCapture={(e) => {
+          const t = e.target as HTMLElement
+          const row = t.closest('li.ib-row')
+          if (row && t.closest('.ib-actions') && t.closest('button')) actedIdx.current = [...(listRef.current?.children ?? [])].indexOf(row)
+        }} aria-label={view === 'pending' ? 'Books to review' : 'Dismissed books'}>
           {(() => {
             const gr = (view === 'pending' ? grPending : grDismissed) ?? []
             const shownGr = gr.slice(0, limit)
@@ -376,17 +445,19 @@ export function Inbox({ onOpenStats }: { onOpenStats: () => void }) {
           })()}
         </ul>
       )}
-      {(undos.length > 0 || note) && (
-        <div className="ib-dock">
-          <p role="status">{note ?? undos[0].text}</p>
-          <span className="ib-tally">{pendingGroups.length + (grPending?.length ?? 0)} left{sorted > 0 && ` · ${sorted} sorted`}</span>
-          {undos.length > 0 && (
-            <button type="button" className="btn-link inline" disabled={undoing} onClick={() => void doUndo()}>
-              {note ? 'Undo earlier' : 'Undo'}{undos.length > 1 && <span className="sr-only"> ({undos.length} can be undone)</span>}
-            </button>
-          )}
-        </div>
-      )}
+      <div className="ib-live" role="status">
+        {(undos.length > 0 || note) && (
+          <div className="ib-dock">
+            <p>{note ?? undos[0].text}</p>
+            <span className="ib-tally">{pendingGroups.length + (grPending?.length ?? 0)} left{sorted > 0 && ` · ${sorted} sorted`}</span>
+            {undos.length > 0 && (
+              <button ref={dockUndoRef} type="button" className="btn-link inline" disabled={undoing} onClick={() => void doUndo()}>
+                {note ? 'Undo earlier' : 'Undo'}{undos.length > 1 && <span className="sr-only"> ({undos.length} can be undone)</span>}
+              </button>
+            )}
+          </div>
+        )}
+      </div>
     </main>
   )
 }
