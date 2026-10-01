@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
-import { authorsCompatible, lookupQuery, titleKey } from '../lib/match'
+import { authorsCompatible, lookupQuery, seriesKey, seriesQuery, titleKey } from '../lib/match'
 import type { MetadataHit } from '../metadata/types'
 import { useLookupMode } from '../settings'
-import { searchMetadata } from '../storage'
+import { searchMetadata, searchSeries } from '../storage'
 
 /**
  * The Open Library hit that is the same book as an Inbox group, or none. Only an exact
@@ -12,6 +12,15 @@ import { searchMetadata } from '../storage'
 export function bestHit(hits: MetadataHit[], title: string, author: string): MetadataHit | undefined {
   const k = titleKey(title)
   return hits.find((h) => titleKey(h.title) === k && authorsCompatible(h.author, author))
+}
+
+/**
+ * The AniList series a volume belongs to, but only for the form the reader chose: a manga and its
+ * light novel share a title, so without that choice there is nothing safe to suggest.
+ */
+export function bestSeriesHit(hits: MetadataHit[], title: string, form: 'novel' | 'manga'): MetadataHit | undefined {
+  const k = seriesKey(title)
+  return hits.find((h) => h.form === form && [h.title, ...(h.altTitles ?? [])].some((t) => seriesKey(t) === k))
 }
 
 // Open Library is a free service: look up at most two rows at a time, on demand.
@@ -67,4 +76,32 @@ export function useLookup(title: string, author: string, enabled: boolean) {
   }, [title, author, enabled, mode])
 
   return { ref, lookup, run, mode }
+}
+
+/**
+ * Looks a manga or light novel up on AniList for genre suggestions, once the reader has said which
+ * form it is. Automatic mode looks as soon as a form is chosen; "ask" mode waits for the button.
+ */
+export function useSeriesLookup(title: string, form: 'novel' | 'manga' | undefined, enabled: boolean) {
+  const mode = useLookupMode()
+  const [result, setResult] = useState<Lookup & { form?: string }>({ state: 'idle' })
+  const started = useRef<string | undefined>(undefined)
+
+  const run = () => {
+    if (!form || !enabled || mode === 'off' || started.current === form) return
+    started.current = form
+    setResult({ state: 'loading', form })
+    slot(() => searchSeries(seriesQuery(title)))
+      .then((hits) => setResult({ state: 'done', hit: bestSeriesHit(hits, title, form), form }))
+      .catch(() => setResult({ state: 'failed', form }))
+  }
+
+  useEffect(() => {
+    if (mode === 'auto') run()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form, enabled, mode, title])
+
+  // A result belongs to the form it was asked for; choosing the other form starts clean.
+  const lookup: Lookup = form && result.form === form ? result : { state: 'idle' }
+  return { lookup, run, mode }
 }

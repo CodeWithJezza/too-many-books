@@ -119,7 +119,7 @@ export function Settings() {
 
       <section className="set-section" aria-labelledby="lk">
         <h2 id="lk" className="set-title">Book details online</h2>
-        <p>Looking a book up sends its title and author to Open Library, and this device's address to the sites that serve covers. Nothing else about you or your library is sent.</p>
+        <p>Looking a book up sends its title and author to Open Library, and this device's address to the sites that serve covers. If you tag an Inbox book as a manga or light novel, its title is also sent to AniList to suggest genres. Nothing else about you or your library is sent.</p>
         <Segmented<LookupMode>
           label="Book details online"
           value={lookupMode}

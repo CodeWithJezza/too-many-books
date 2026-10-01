@@ -33,3 +33,18 @@ describe('bestHit with series volumes', () => {
     expect(bestHit(hits, 'A Tale of the Secret Saint (Light Novel), Volume 3', 'Someone Else')).toBeUndefined()
   })
 })
+
+import { bestSeriesHit } from './lookup'
+describe('bestSeriesHit', () => {
+  const series = (title: string, form: 'novel' | 'manga', alt: string[] = []): MetadataHit => ({ providerId: 'anilist', key: `anilist:${title}${form}`, title, altTitles: alt, author: '', subjects: [], isbns: [], form })
+  const hits = [series('Fushi no Kami: Rebuilding Civilization Starts With a Village', 'manga'), series('Fushi no Kami: Rebuilding Civilization Starts With a Village', 'novel', ['Fushi no Kami: Henkyou kara Hajimeru Bunmei Saiseiki'])]
+  const t = 'Fushi no Kami: Rebuilding Civilization Starts With a Village, Volume 1'
+  it('picks the series of the form the reader chose, ignoring the volume', () => {
+    expect(bestSeriesHit(hits, t, 'novel')).toBe(hits[1])
+    expect(bestSeriesHit(hits, t, 'manga')).toBe(hits[0])
+  })
+  it('matches on a romanised title too, and offers nothing for a different series', () => {
+    expect(bestSeriesHit(hits, 'Fushi no Kami: Henkyou kara Hajimeru Bunmei Saiseiki, Vol. 2', 'novel')).toBe(hits[1])
+    expect(bestSeriesHit(hits, 'Another Series, Volume 1', 'novel')).toBeUndefined()
+  })
+})

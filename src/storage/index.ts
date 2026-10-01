@@ -5,6 +5,7 @@ export { db }
 import { buildSeed } from './seed'
 import { untracked } from '../backup/changes'
 import { getLookupMode } from '../settings'
+import { aniList } from '../metadata/anilist'
 import { openLibrary } from '../metadata/openLibrary'
 import type { MetadataHit } from '../metadata/types'
 import { parseLibbyExport } from '../import/libby'
@@ -179,6 +180,25 @@ export async function searchMetadata(query: string, signal?: AbortSignal, store:
   }
 }
 
+/** AniList series search, cached like searchMetadata. Used only for manga and light novels the reader has tagged. */
+export async function searchSeries(query: string, signal?: AbortSignal, store: LibraryDB = db): Promise<MetadataHit[]> {
+  const key = `anilist:${query.trim().toLowerCase()}`
+  const cached = await store.metadata.get(key)
+  if (cached && Date.now() - cached.at < 7 * 864e5) return cached.hits
+  if (getLookupMode() === 'off') {
+    if (cached) return cached.hits
+    throw new LookupOffError('Online lookups are off')
+  }
+  try {
+    const hits = await aniList.search(query, signal)
+    await store.metadata.put({ query: key, hits, at: Date.now() })
+    return hits
+  } catch (e) {
+    if (cached) return cached.hits
+    throw e
+  }
+}
+
 export function useWorksRaw(): Work[] {
   return useLiveQuery(() => db.works.toArray(), [], [] as Work[])
 }
@@ -213,6 +233,8 @@ export function useRecords(state: RecordState): ImportRecord[] | undefined {
 
 export type Resolution =
   | { kind: 'finished'; format: Format }
+  /** The reader stopped. The Finish date is the newest borrow month, as for Finished: it is when they stopped, as far as the export knows. */
+  | { kind: 'dnf'; format: Format }
   | { kind: 'want' }
   | { kind: 'link' }
 
@@ -299,8 +321,8 @@ export async function resolveGroupWithReceipt(input: ResolveInput, store: Librar
     }
 
     let readingId: number | undefined
-    if (input.resolution.kind === 'finished') {
-      readingId = (await store.readings.add({ workId, status: 'finished', format: input.resolution.format, finish: monthOf(newest.borrowedAt) })) as number
+    if (input.resolution.kind === 'finished' || input.resolution.kind === 'dnf') {
+      readingId = (await store.readings.add({ workId, status: input.resolution.kind, format: input.resolution.format, finish: monthOf(newest.borrowedAt) })) as number
       const w = await store.works.get(workId)
       if (w?.shelves.includes('want')) await store.works.update(workId, { shelves: w.shelves.filter((s) => s !== 'want') })
     }

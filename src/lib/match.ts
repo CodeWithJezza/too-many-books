@@ -28,6 +28,15 @@ export function authorsCompatible(a: string, b: string): boolean {
   return [...small].every((t) => big.has(t))
 }
 
+/** A volume's series: the title without edition labels, the volume number and anything after it. */
+export function seriesKey(title: string): string {
+  return titleKey(title.replace(/,?\s*\b(?:volume|vol\.?)\s*\d+.*$/i, '').replace(/\([^)]*\)/g, ' '))
+}
+
+/** What to ask a series catalog: the title without labels and volume. */
+export const seriesQuery = (title: string): string =>
+  title.replace(/,?\s*\b(?:volume|vol\.?)\s*\d+.*$/i, '').replace(/\([^)]*\)/g, ' ').replace(/\s+/g, ' ').trim()
+
 /** What to ask Open Library: the title without labels, the volume, and the first author. */
 export function lookupQuery(title: string, author: string): string {
   const vol = title.match(/\b(?:volume|vol\.?)\s*(\d+)/i)?.[1]

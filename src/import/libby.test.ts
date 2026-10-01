@@ -171,3 +171,16 @@ describe('same-title records with different title IDs', () => {
     expect(buildGroups([rec(1, 'A', 'ebook'), rec(2, 'B', 'audiobook'), rec(3, 'A', 'ebook')], [])).toHaveLength(1)
   })
 })
+
+describe('DNF from the Inbox', () => {
+  it('makes a DNF Reading dated to the newest borrow month and keeps the Loans', async () => {
+    const db2 = new LibraryDB(`t-${Math.random()}`)
+    await importLibby(fixture, 'a.json', db2)
+    const recs = (await db2.importRecords.toArray()).filter((r) => r.titleId === '1001')
+    const workId = await resolveGroup({ recordIds: recs.map((r) => r.id!), resolution: { kind: 'dnf', format: 'ebook' } }, db2)
+    const [r] = await db2.readings.where('workId').equals(workId).toArray()
+    expect(r.status).toBe('dnf')
+    expect(r.finish).toBeDefined()
+    expect(await db2.loans.where('workId').equals(workId).count()).toBe(2)
+  })
+})

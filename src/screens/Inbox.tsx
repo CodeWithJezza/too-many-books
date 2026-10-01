@@ -3,7 +3,7 @@ import { Jacket } from '../components/Jacket'
 import { Segmented } from '../components/FormControls'
 import { formatDate } from '../lib/dates'
 import { GENRES } from '../lib/genres'
-import { useLookup } from '../import/lookup'
+import { useLookup, useSeriesLookup } from '../import/lookup'
 import { LookupLine } from '../components/LookupLine'
 import { suggestGenres, suggestTags } from '../metadata/suggest'
 import { buildGroups, isClean, type InboxGroup } from '../lib/inbox'
@@ -38,6 +38,7 @@ function GroupRow({ group, dismissed, onResolved }: { group: InboxGroup; dismiss
   const [genres, setGenres] = useState<GenreId[]>([])
   const [showGenres, setShowGenres] = useState(false)
   const [tags, setTags] = useState<string[]>([])
+  const [showForm, setShowForm] = useState(false)
 
   const ids = group.records.map((r) => r.id!)
   const match = group.match
@@ -47,8 +48,12 @@ function GroupRow({ group, dismissed, onResolved }: { group: InboxGroup; dismiss
   const makesNewWork = workId === undefined
   const { ref, lookup, run: lookNow, mode } = useLookup(group.title, group.author, !dismissed && match?.kind !== 'exact')
   const hit = lookup.hit
-  const suggested = hit ? suggestGenres(hit.subjects) : []
   const suggestedTags = suggestTags(group.title, hit?.subjects)
+  // Libby gives a manga and its light novel the same title, so AniList is only asked once the reader has chosen which this is.
+  const form = tags.includes('light novel') ? 'novel' : tags.includes('manga') ? 'manga' : undefined
+  const series = useSeriesLookup(group.title, form, !dismissed && makesNewWork && !hit)
+  const seriesHit = series.lookup.hit
+  const suggested = [...new Set([...(hit ? suggestGenres(hit.subjects) : []), ...(seriesHit ? suggestGenres(seriesHit.subjects) : [])])]
   const details = makesNewWork
     ? { genres, tags, pageCount: hit?.pageCount, coverUrl: hit?.coverUrl, openLibrary: hit?.key, isbn: hit?.isbns }
     : undefined
@@ -106,13 +111,24 @@ function GroupRow({ group, dismissed, onResolved }: { group: InboxGroup; dismiss
                 )
               })}
             </div>}
-            {suggestedTags.length > 0 && (
-              <div className="genre-picks" role="group" aria-label={`Tags for ${group.title}`}>
-                {suggestedTags.map((t) => {
+            {suggestedTags.length === 0 && !showForm && tags.length === 0 && (
+              <button type="button" className="btn-link" onClick={() => setShowForm(true)}>Manga or light novel?</button>
+            )}
+            {(suggestedTags.length > 0 || showForm || tags.length > 0) && (
+              <div className="genre-picks" role="group" aria-label={`Form for ${group.title}`}>
+                {['light novel', 'manga'].map((t) => {
                   const on = tags.includes(t)
-                  return <button key={t} type="button" className="genre-pick sm" aria-pressed={on} onClick={() => setTags(on ? tags.filter((x) => x !== t) : [...tags, t])}>Tag: {t}<span className="sug"> · suggested</span></button>
+                  return <button key={t} type="button" className="genre-pick sm" aria-pressed={on} onClick={() => setTags(on ? tags.filter((x) => x !== t) : [...tags.filter((x) => x !== 'light novel' && x !== 'manga'), t])}>Tag: {t}{suggestedTags.includes(t) && <span className="sug"> · suggested</span>}</button>
                 })}
               </div>
+            )}
+            {form && series.mode === 'ask' && series.lookup.state === 'idle' && <button type="button" className="btn-link" onClick={series.run}>Look up genres on AniList</button>}
+            {form && series.mode !== 'off' && series.lookup.state !== 'idle' && (
+              <p className="ib-lookup">
+                {series.lookup.state === 'loading' && 'Checking AniList…'}
+                {series.lookup.state === 'done' && (seriesHit ? `Found this ${form === 'novel' ? 'light novel' : 'manga'} series on AniList. Its genres are suggested above.` : `No sure ${form === 'novel' ? 'light novel' : 'manga'} match on AniList, so nothing is suggested.`)}
+                {series.lookup.state === 'failed' && 'Could not reach AniList. You can set genres by hand.'}
+              </p>
             )}
           </div>
         )}
@@ -131,6 +147,7 @@ function GroupRow({ group, dismissed, onResolved }: { group: InboxGroup; dismiss
                 </select>
               </label>
               <button type="button" className="btn-primary sm" disabled={busy || undecided} onClick={() => resolve({ recordIds: ids, resolution: { kind: 'finished', format }, workId, details }, 'finished')}>Finished</button>
+              <button type="button" className="btn-quiet" disabled={busy || undecided} onClick={() => resolve({ recordIds: ids, resolution: { kind: 'dnf', format }, workId, details }, 'marked did not finish')}>DNF</button>
               <button type="button" className="btn-quiet" disabled={busy || undecided} onClick={() => resolve({ recordIds: ids, resolution: { kind: 'want' }, workId, details }, 'on Want to read')}>Want to read</button>
               {match && (
                 <button type="button" className="btn-quiet" disabled={busy || undecided || same === false} onClick={() => resolve({ recordIds: ids, resolution: { kind: 'link' }, workId }, 'linked')}>Just link loans</button>
@@ -140,7 +157,7 @@ function GroupRow({ group, dismissed, onResolved }: { group: InboxGroup; dismiss
             <p className="ib-note">
               {undecided
                 ? 'Say whether it is the same book first.'
-                : `Finished is dated ${formatDate(finish)}, the borrow month.`}
+                : `Finished or DNF is dated ${formatDate(finish)}, the borrow month.`}
             </p>
           </>
         )}
