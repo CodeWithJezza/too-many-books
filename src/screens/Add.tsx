@@ -126,6 +126,7 @@ export function Add({ onSaved }: { onSaved: (workId: number) => void }) {
 
   const suggested = picked?.kind === 'hit' ? suggestGenres(picked.hit.subjects) : []
   const suggestedTags = picked && picked.kind !== 'existing' ? suggestTags(text, picked.kind === 'hit' ? picked.hit.subjects : []) : []
+  const FORMS = [{ tag: 'light novel', label: 'Light novel' }, { tag: 'manga', label: 'Manga' }]
   const readingFields = status !== 'want'
   const startShown = status === 'reading' || hasStart
   const finishShown = status === 'finished' || status === 'dnf'
@@ -311,13 +312,13 @@ export function Add({ onSaved }: { onSaved: (workId: number) => void }) {
           </fieldset>
         )}
 
-        {suggestedTags.length > 0 && (
+        {picked && picked.kind !== 'existing' && (
           <fieldset className="field">
-            <legend>Tags <span className="hint-inline">optional, suggested</span></legend>
+            <legend>Light novel or manga? <span className="hint-inline">optional{suggestedTags.length > 0 && ', suggested one is marked'}</span></legend>
             <div className="genre-picks">
-              {suggestedTags.map((t) => {
-                const on = tags.includes(t)
-                return <button key={t} type="button" className="genre-pick" aria-pressed={on} onClick={() => setTags(on ? tags.filter((x) => x !== t) : [...tags, t])}>{t}<span className="sug"> · suggested</span></button>
+              {FORMS.map((f) => {
+                const on = tags.includes(f.tag)
+                return <button key={f.tag} type="button" className="genre-pick tag-pick" aria-pressed={on} onClick={() => setTags(on ? tags.filter((x) => x !== f.tag) : [...tags.filter((x) => x !== 'light novel' && x !== 'manga'), f.tag])}>{f.label}{suggestedTags.includes(f.tag) && <span className="sug"> · suggested</span>}</button>
               })}
             </div>
           </fieldset>

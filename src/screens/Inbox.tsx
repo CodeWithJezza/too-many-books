@@ -29,6 +29,8 @@ const asWork = (g: InboxGroup, coverUrl?: string): WorkSummary => ({
   id: 0, title: g.title, author: g.author, genres: [], tags: [], shelves: [], readingCount: 0, coverUrl: g.coverUrl ?? coverUrl,
 })
 
+const FORMS = [{ tag: 'light novel', label: 'Light novel' }, { tag: 'manga', label: 'Manga' }]
+
 function GroupRow({ group, dismissed, onResolved }: { group: InboxGroup; dismissed: boolean; onResolved: (r: ResolveReceipt, what: string) => void }) {
   const newest = group.records[0]
   const [format, setFormat] = useState<Format>(newest.format ?? 'ebook')
@@ -38,7 +40,6 @@ function GroupRow({ group, dismissed, onResolved }: { group: InboxGroup; dismiss
   const [genres, setGenres] = useState<GenreId[]>([])
   const [showGenres, setShowGenres] = useState(false)
   const [tags, setTags] = useState<string[]>([])
-  const [showForm, setShowForm] = useState(false)
 
   const ids = group.records.map((r) => r.id!)
   const match = group.match
@@ -111,17 +112,12 @@ function GroupRow({ group, dismissed, onResolved }: { group: InboxGroup; dismiss
                 )
               })}
             </div>}
-            {suggestedTags.length === 0 && !showForm && tags.length === 0 && (
-              <button type="button" className="btn-link" onClick={() => setShowForm(true)}>Manga or light novel?</button>
-            )}
-            {(suggestedTags.length > 0 || showForm || tags.length > 0) && (
-              <div className="genre-picks" role="group" aria-label={`Form for ${group.title}`}>
-                {['light novel', 'manga'].map((t) => {
-                  const on = tags.includes(t)
-                  return <button key={t} type="button" className="genre-pick sm" aria-pressed={on} onClick={() => setTags(on ? tags.filter((x) => x !== t) : [...tags.filter((x) => x !== 'light novel' && x !== 'manga'), t])}>Tag: {t}{suggestedTags.includes(t) && <span className="sug"> · suggested</span>}</button>
-                })}
-              </div>
-            )}
+            <div className="genre-picks" role="group" aria-label={`Form for ${group.title}`}>
+              {FORMS.map((f) => {
+                const on = tags.includes(f.tag)
+                return <button key={f.tag} type="button" className="genre-pick sm tag-pick" aria-pressed={on} onClick={() => setTags(on ? tags.filter((x) => x !== f.tag) : [...tags.filter((x) => x !== 'light novel' && x !== 'manga'), f.tag])}>{f.label}{suggestedTags.includes(f.tag) && <span className="sug"> · suggested</span>}</button>
+              })}
+            </div>
             {form && series.mode === 'ask' && series.lookup.state === 'idle' && <button type="button" className="btn-link" onClick={series.run}>Look up genres on AniList</button>}
             {form && series.mode !== 'off' && series.lookup.state !== 'idle' && (
               <p className="ib-lookup">
