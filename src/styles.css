@@ -457,6 +457,7 @@ main h1:focus { outline: none; }
 .chip-filters { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .chip-filters li { display: inline-flex; align-items: center; gap: 2px; padding: 0 2px 0 14px; min-height: 44px; border: 1px solid var(--ink); border-radius: 99px; font-size: 14px; font-weight: 600; }
 .chip-filters button { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 99px; }
+.chip-filters .chip-clear button { width: auto; height: auto; min-height: 44px; border-radius: 4px; }
 .st-filters { align-items: center; }
 .st-strip { position: sticky; top: -28px; margin-inline: -28px; z-index: 2; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 56px; margin-top: 14px; padding: 6px 28px; background: var(--bg); border-bottom: 1px solid var(--rule); font-size: 16px; }
 .st-row { display: grid; grid-template-columns: 96px minmax(0, 1fr) 32px; gap: 12px; align-items: center; width: 100%; min-height: 44px; text-align: left; border-radius: 4px; }
