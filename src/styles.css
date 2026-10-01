@@ -455,3 +455,19 @@ main h1:focus { outline: none; }
 button.st-seg { min-height: 22px; }
 .st-bars li:has(> .st-row), .st-rank li:has(> .st-row) { display: block; }
 .st-bars li.on .st-bl, .st-rank li.on .st-bl { font-weight: 800; }
+
+/* ---------- library views ---------- */
+.wall-s { grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); gap: 22px 14px; }
+.wall-l { grid-template-columns: repeat(auto-fill, minmax(176px, 1fr)); gap: 36px 24px; }
+@media (max-width: 759px) { .wall-s { grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); } .wall-l { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); } }
+.book-list { display: grid; }
+.book-row { display: flex; align-items: center; gap: 14px; width: 100%; min-height: 64px; padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--rule); }
+.book-row[aria-pressed='true'] { background: var(--panel); box-shadow: inset 4px 0 0 var(--ink); }
+.book-row .jacket-mini { width: 48px; }
+.book-main { display: grid; gap: 2px; min-width: 0; flex: 1; }
+.book-title { font-weight: 700; font-size: 16px; }
+.book-sub { font-size: 14px; color: var(--mute); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.letter-index { display: flex; flex-wrap: wrap; gap: 2px; margin: -10px 0 18px; }
+.letter-index button { min-width: 36px; min-height: 44px; border-radius: 4px; font-size: 14px; font-weight: 700; }
+.letter-index button:disabled { color: var(--mute); opacity: 0.35; cursor: default; }
+@media (max-width: 759px) { .letter-index { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; } }

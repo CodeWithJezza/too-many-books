@@ -4,8 +4,9 @@ import { Icon } from '../components/Icon'
 import { Jacket } from '../components/Jacket'
 import { Stars } from '../components/Stars'
 import { formatDate } from '../lib/dates'
-import { applyQuery, defaultQuery, isFiltered, isMissing, MISSING_LABEL, onShelf, type LibraryQuery, type Missing, type ShelfFilter, type SortKey } from '../lib/filter'
+import { applyQuery, defaultQuery, isFiltered, sortLetter, isMissing, MISSING_LABEL, onShelf, type LibraryQuery, type Missing, type ShelfFilter, type SortKey } from '../lib/filter'
 import { GENRES, labelOf } from '../lib/genres'
+import { setLibraryView, useLibraryView, type LibraryView } from '../settings'
 import { clearSampleData } from '../storage'
 import type { Format, GenreId, WorkSummary } from '../types'
 
@@ -31,6 +32,14 @@ function caption(w: WorkSummary): string {
   if (l.status === 'dnf') return `${g} · DNF`
   return `${g} · ${formatDate(l.finish)}`
 }
+
+const VIEWS: { id: LibraryView; label: string }[] = [
+  { id: 'grid-s', label: 'Small covers' },
+  { id: 'grid-m', label: 'Medium covers' },
+  { id: 'grid-l', label: 'Large covers' },
+  { id: 'list', label: 'List' },
+]
+const LETTERS = [...'ABCDEFGHIJKLMNOPQRSTUVWXYZ', '#']
 
 const FORMAT_LABEL: Record<Format, string> = { ebook: 'Ebook', audiobook: 'Audiobook', print: 'Print' }
 const RATING_CHOICES = Array.from({ length: 10 }, (_, i) => 5 - i / 2)
@@ -70,6 +79,14 @@ export function Library({ works, query: q, onQuery: setQ, selectedId, onSelect, 
   const tags = useMemo(() => [...new Set((works ?? []).flatMap((w) => w.tags))].sort(), [works])
   const years = useMemo(() => [...new Set((works ?? []).flatMap((w) => (w.readings ?? []).map((r) => r.finish?.y)).filter((y): y is number => y !== undefined))].sort((a, b) => b - a), [works])
   const [moreOpen, setMoreOpen] = useState(false)
+  const view = useLibraryView()
+  // The first book under each letter, so the index can jump to it.
+  const firstOf = useMemo(() => {
+    const m = new Map<string, number>()
+    for (const w of shown) { const l = sortLetter(w, q.sort); if (l && !m.has(l)) m.set(l, w.id) }
+    return m
+  }, [shown, q.sort])
+  const jump = (l: string) => document.getElementById(`book-${firstOf.get(l)}`)?.scrollIntoView({ block: 'start' })
   const gaps = useMemo(() => Object.fromEntries((Object.keys(MISSING_LABEL) as Missing[]).map((m) => [m, (works ?? []).filter((w) => isMissing(w, m)).length])) as Record<Missing, number>, [works])
   const counts = useMemo(() => {
     const c = {} as Record<ShelfFilter, number>
@@ -116,6 +133,12 @@ export function Library({ works, query: q, onQuery: setQ, selectedId, onSelect, 
           </select>
         </label>
         <button type="button" className="btn-quiet" aria-expanded={moreOpen || chips.length > 0} onClick={() => setMoreOpen(!moreOpen)}>Filters{chips.length > 0 && ` · ${chips.length}`}</button>
+        <label className="select">
+          <span className="sr-only">View</span>
+          <select value={view} onChange={(e) => setLibraryView(e.target.value as LibraryView)}>
+            {VIEWS.map((v) => <option key={v.id} value={v.id}>{v.label}</option>)}
+          </select>
+        </label>
         <label className="select">
           <span className="sr-only">Sort by</span>
           <select value={q.sort} onChange={(e) => set('sort', e.target.value as SortKey)}>
@@ -190,15 +213,40 @@ export function Library({ works, query: q, onQuery: setQ, selectedId, onSelect, 
           {filtered && <button type="button" className="btn-quiet" onClick={() => setQ(defaultQuery)}>Clear filters</button>}
         </div>
       ) : (
-        <ul className="wall" aria-label={`${shown.length} books`}>
-          {shown.map((w) => (
-            <li key={w.id} className="wall-item">
-              <Jacket work={w} selected={w.id === selectedId} onClick={() => onSelect(w.id)} />
-              <p className="cap">{caption(w)}</p>
-              {w.latest && w.latest.status !== 'reading' && <Stars value={w.latest.rating} size={14} />}
-            </li>
-          ))}
-        </ul>
+        <>
+          {firstOf.size > 0 && shown.length > 12 && (
+            <nav className="letter-index" aria-label="Jump to letter">
+              {LETTERS.map((l) => <button key={l} type="button" disabled={!firstOf.has(l)} onClick={() => jump(l)}>{l}</button>)}
+            </nav>
+          )}
+          {view === 'list' ? (
+            <ul className="book-list" aria-label={`${shown.length} books`}>
+              {shown.map((w) => (
+                <li key={w.id} id={`book-${w.id}`}>
+                  <button type="button" className="book-row" aria-pressed={w.id === selectedId} onClick={() => onSelect(w.id)}>
+                    <Jacket work={w} size="mini" />
+                    <span className="book-main">
+                      <span className="book-title">{w.title}</span>
+                      <span className="book-sub">{w.author || 'Author unknown'}{w.series && ` · ${w.series.name} #${w.series.position}`}</span>
+                      <span className="book-sub">{caption(w)}{w.latest && ` · ${FORMAT_LABEL[w.latest.format]}`}{w.pageCount ? ` · ${w.pageCount} pages` : ''}</span>
+                    </span>
+                    {w.latest && w.latest.status !== 'reading' && <Stars value={w.latest.rating} size={14} />}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <ul className={`wall wall-${view.slice(5)}`} aria-label={`${shown.length} books`}>
+              {shown.map((w) => (
+                <li key={w.id} id={`book-${w.id}`} className="wall-item">
+                  <Jacket work={w} selected={w.id === selectedId} onClick={() => onSelect(w.id)} />
+                  <p className="cap">{caption(w)}</p>
+                  {w.latest && w.latest.status !== 'reading' && <Stars value={w.latest.rating} size={14} />}
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
       )}
     </main>
   )

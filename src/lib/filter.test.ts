@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { applyQuery, defaultQuery } from './filter'
+import { applyQuery, defaultQuery, sortLetter } from './filter'
 import type { WorkSummary } from '../types'
 
 const w = (id: number, title: string, author: string, extra: Partial<WorkSummary> = {}): WorkSummary => ({
@@ -77,5 +77,17 @@ describe('missing-data filters (A7)', () => {
   })
   it('only a finished Reading can be missing its finish date', () => {
     expect(ids('date')).toEqual([2])
+  })
+})
+
+describe('sortLetter', () => {
+  it('files a title under its first word after any article, and an author under the last name', () => {
+    expect(sortLetter(w(1, 'The Zed', 'Ann Alpha'), 'title')).toBe('Z')
+    expect(sortLetter(w(2, 'A Bee', 'Bob Beta'), 'author')).toBe('B')
+    expect(sortLetter(w(3, '1984', 'George Orwell'), 'title')).toBe('#')
+    expect(sortLetter(w(4, 'Élan', 'x'), 'title')).toBe('E')
+  })
+  it('has no letters when the sort is not alphabetical', () => {
+    expect(sortLetter(w(1, 'Zed', 'A'), 'recent')).toBeUndefined()
   })
 })

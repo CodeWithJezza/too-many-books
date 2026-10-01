@@ -84,6 +84,13 @@ const norm = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,
 const lastName = (a: string) => norm(a.trim().split(/\s+/).at(-1) ?? a)
 const sortTitle = (t: string) => norm(t).replace(/^(the|a|an)\s+/, '')
 
+/** The letter a book files under for the current sort: title ignores a leading article, author uses the last name. Anything else is '#'. */
+export function sortLetter(w: WorkSummary, sort: SortKey): string | undefined {
+  if (sort !== 'title' && sort !== 'author') return undefined
+  const c = (sort === 'title' ? sortTitle(w.title) : lastName(w.author)).trim().charAt(0).toUpperCase()
+  return /[A-Z]/.test(c) ? c : '#'
+}
+
 export function applyQuery(works: WorkSummary[], q: LibraryQuery): WorkSummary[] {
   const needle = norm(q.text.trim())
   const out = works.filter(

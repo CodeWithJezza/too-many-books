@@ -44,3 +44,31 @@ const subscribe = (cb: () => void) => {
 }
 
 export const useLookupMode = (): LookupMode => useSyncExternalStore(subscribe, getLookupMode)
+
+/** How the Library lays out books. A per-device preference, kept in this browser like the lookup mode. */
+export type LibraryView = 'grid-s' | 'grid-m' | 'grid-l' | 'list'
+const VIEWS: LibraryView[] = ['grid-s', 'grid-m', 'grid-l', 'list']
+const VIEW_KEY = 'tmb-view'
+let viewMemory: LibraryView = 'grid-m'
+
+export function getLibraryView(): LibraryView {
+  try {
+    const v = globalThis.localStorage?.getItem(VIEW_KEY) as LibraryView | null
+    if (v && VIEWS.includes(v)) return v
+  } catch {
+    /* private mode: fall through to this session's value */
+  }
+  return viewMemory
+}
+
+export function setLibraryView(v: LibraryView): void {
+  viewMemory = v
+  try {
+    globalThis.localStorage?.setItem(VIEW_KEY, v)
+  } catch {
+    /* the choice still holds for this session */
+  }
+  globalThis.dispatchEvent?.(new Event(EVENT))
+}
+
+export const useLibraryView = (): LibraryView => useSyncExternalStore(subscribe, getLibraryView)
