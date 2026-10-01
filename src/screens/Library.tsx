@@ -4,7 +4,7 @@ import { Icon } from '../components/Icon'
 import { Jacket } from '../components/Jacket'
 import { Stars } from '../components/Stars'
 import { formatDate } from '../lib/dates'
-import { applyQuery, defaultQuery, isFiltered, onShelf, type LibraryQuery, type ShelfFilter, type SortKey } from '../lib/filter'
+import { applyQuery, defaultQuery, isFiltered, isMissing, MISSING_LABEL, onShelf, type LibraryQuery, type Missing, type ShelfFilter, type SortKey } from '../lib/filter'
 import { GENRES, labelOf } from '../lib/genres'
 import { clearSampleData } from '../storage'
 import type { Format, GenreId, WorkSummary } from '../types'
@@ -44,6 +44,7 @@ function activeChips(q: LibraryQuery): { key: string; label: string; clear: Part
   if (q.year !== 'any') out.push({ key: 'year', label: q.year === 'unknown' ? 'Date unknown' : q.month !== 'any' ? `${MONTH_NAMES[q.month - 1]} ${q.year}` : String(q.year), clear: { year: 'any', month: 'any' } })
   if (q.rating !== 'any') out.push({ key: 'rating', label: q.rating === 'unrated' ? 'Unrated' : `Rated ${q.rating}`, clear: { rating: 'any' } })
   if (q.format !== 'any') out.push({ key: 'format', label: FORMAT_LABEL[q.format], clear: { format: 'any' } })
+  if (q.missing !== 'any') out.push({ key: 'missing', label: `Missing ${MISSING_LABEL[q.missing]}`, clear: { missing: 'any' } })
   if (q.tag !== 'any') out.push({ key: 'tag', label: `Tag: ${q.tag}`, clear: { tag: 'any' } })
   return out
 }
@@ -69,6 +70,7 @@ export function Library({ works, query: q, onQuery: setQ, selectedId, onSelect, 
   const tags = useMemo(() => [...new Set((works ?? []).flatMap((w) => w.tags))].sort(), [works])
   const years = useMemo(() => [...new Set((works ?? []).flatMap((w) => (w.readings ?? []).map((r) => r.finish?.y)).filter((y): y is number => y !== undefined))].sort((a, b) => b - a), [works])
   const [moreOpen, setMoreOpen] = useState(false)
+  const gaps = useMemo(() => Object.fromEntries((Object.keys(MISSING_LABEL) as Missing[]).map((m) => [m, (works ?? []).filter((w) => isMissing(w, m)).length])) as Record<Missing, number>, [works])
   const counts = useMemo(() => {
     const c = {} as Record<ShelfFilter, number>
     for (const s of SHELVES) c[s.id] = works?.filter((w) => onShelf(w, s.id)).length ?? 0
@@ -144,6 +146,13 @@ export function Library({ works, query: q, onQuery: setQ, selectedId, onSelect, 
             <select value={q.format} onChange={(e) => set('format', e.target.value as Format | 'any')}>
               <option value="any">All formats</option>
               {(Object.keys(FORMAT_LABEL) as Format[]).map((f) => <option key={f} value={f}>{FORMAT_LABEL[f]}</option>)}
+            </select>
+          </label>
+          <label className="select">
+            <span className="sr-only">Missing</span>
+            <select value={q.missing} onChange={(e) => set('missing', e.target.value as Missing | 'any')}>
+              <option value="any">Any completeness</option>
+              {(Object.keys(MISSING_LABEL) as Missing[]).map((m) => <option key={m} value={m}>Missing {MISSING_LABEL[m]} ({gaps[m]})</option>)}
             </select>
           </label>
           <label className="select">

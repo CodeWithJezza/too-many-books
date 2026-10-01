@@ -23,6 +23,21 @@ export const workFacetsOk = (w: Pick<Work, 'genres' | 'tags'>, f: Facets): boole
 export const readingFacetsOk = (r: Pick<Reading, 'rating' | 'format'>, f: Facets): boolean =>
   (f.rating === 'any' || (f.rating === 'unrated' ? r.rating === undefined : r.rating === f.rating)) && (f.format === 'any' || r.format === f.format)
 
+/** What a Work can be missing. Filtering on these lists the gaps to fill; it never fills them. */
+export type Missing = 'pages' | 'genre' | 'cover' | 'date'
+
+export const MISSING_LABEL: Record<Missing, string> = { pages: 'page count', genre: 'genre', cover: 'cover', date: 'finish date' }
+
+/** 'date' means a finished Reading with no Finish date; a book still being read or DNF is not missing one. */
+export function isMissing(w: WorkSummary, what: Missing): boolean {
+  switch (what) {
+    case 'pages': return !w.pageCount
+    case 'genre': return w.genres.length === 0
+    case 'cover': return !w.coverUrl
+    case 'date': return (w.readings ?? (w.latest ? [w.latest] : [])).some((r) => r.status === 'finished' && !r.finish)
+  }
+}
+
 /** Library-only Reading facets: which read-through, and when it ended. 'unknown' year means no Finish date. */
 export interface LibraryQuery extends Facets {
   text: string
@@ -31,9 +46,10 @@ export interface LibraryQuery extends Facets {
   status: ReadingStatus | 'any'
   year: number | 'unknown' | 'any'
   month: number | 'any'
+  missing: Missing | 'any'
 }
 
-export const defaultQuery: LibraryQuery = { ...noFacets, text: '', shelf: 'all', sort: 'recent', status: 'any', year: 'any', month: 'any' }
+export const defaultQuery: LibraryQuery = { ...noFacets, text: '', shelf: 'all', sort: 'recent', status: 'any', year: 'any', month: 'any', missing: 'any' }
 
 const readingOk = (r: Reading, q: LibraryQuery): boolean =>
   readingFacetsOk(r, q) &&
@@ -47,7 +63,7 @@ export const readingFiltered = (q: LibraryQuery): boolean =>
 
 /** True when anything differs from the unfiltered Library. */
 export const isFiltered = (q: LibraryQuery): boolean =>
-  q.text !== '' || q.shelf !== 'all' || q.genre !== 'any' || q.tag !== 'any' || readingFiltered(q)
+  q.text !== '' || q.shelf !== 'all' || q.genre !== 'any' || q.tag !== 'any' || q.missing !== 'any' || readingFiltered(q)
 
 export function onShelf(w: WorkSummary, shelf: ShelfFilter): boolean {
   switch (shelf) {
@@ -74,6 +90,7 @@ export function applyQuery(works: WorkSummary[], q: LibraryQuery): WorkSummary[]
     (w) =>
       onShelf(w, q.shelf) &&
       workFacetsOk(w, q) &&
+      (q.missing === 'any' || isMissing(w, q.missing)) &&
       (!readingFiltered(q) || (w.readings ?? (w.latest ? [w.latest] : [])).some((r) => readingOk(r, q))) &&
       (!needle || norm(w.title).includes(needle) || norm(w.author).includes(needle)),
   )

@@ -61,3 +61,21 @@ describe('Reading-level facets (ADR 0008)', () => {
     expect(ids({ format: 'ebook' })).toEqual([1, 3])
   })
 })
+
+describe('missing-data filters (A7)', () => {
+  const rd = (workId: number, r: Partial<import('../types').Reading>) => ({ workId, status: 'finished' as const, format: 'ebook' as const, ...r })
+  const works = [
+    w(1, 'Full', 'A', { pageCount: 300, coverUrl: 'x', readings: [rd(1, { finish: { y: 2024 } })] }),
+    w(2, 'Bare', 'B', { genres: [], readings: [rd(2, {})] }),
+    w(3, 'Reading', 'C', { pageCount: 100, coverUrl: 'x', readings: [rd(3, { status: 'reading' })] }),
+  ]
+  const ids = (missing: import('./filter').Missing) => applyQuery(works, { ...defaultQuery, sort: 'title', missing }).map((x) => x.id)
+  it('lists books missing pages, genre or cover', () => {
+    expect(ids('pages')).toEqual([2])
+    expect(ids('genre')).toEqual([2])
+    expect(ids('cover')).toEqual([2])
+  })
+  it('only a finished Reading can be missing its finish date', () => {
+    expect(ids('date')).toEqual([2])
+  })
+})
