@@ -27,7 +27,8 @@ export function Jacket({ work, selected, onClick, size = 'grid' }: {
     </>
   )
   const cls = `jacket jacket-${size}${selected ? ' is-selected' : ''}`
-  const style = { ['--ink-genre' as string]: ink }
+  const longest = Math.max(1, ...work.title.split(/\s+/).map((w) => w.length))
+  const style = { ['--ink-genre' as string]: ink, ['--wl' as string]: longest }
   if (!onClick) return <div className={cls} style={style} role="img" aria-label={`${work.title} by ${work.author}`}>{body}</div>
   return (
     <button type="button" className={cls} style={style} onClick={onClick} aria-pressed={selected} aria-label={`${work.title} by ${work.author}`}>

@@ -60,6 +60,9 @@ function activeChips(q: LibraryQuery): { key: string; label: string; clear: Part
   return out
 }
 
+/** Set when the reader waves the backup reminder away; lasts until the app is reopened. */
+let nudgeDismissed = false
+
 export function Library({ works, query: q, onQuery: setQ, selectedId, onSelect, sample, onOpenSettings }: {
   works: WorkSummary[] | undefined
   query: LibraryQuery
@@ -71,7 +74,8 @@ export function Library({ works, query: q, onQuery: setQ, selectedId, onSelect, 
 }) {
   useSyncExternalStore(subscribeChanges, changesSinceBackup)
   useSyncExternalStore(subscribeChanges, () => lastBackupAt() ?? 0)
-  const nudge = works !== undefined && shouldPromptBackup(works.some((w) => !w.synthetic))
+  const [nudgeHidden, setNudgeHidden] = useState(nudgeDismissed)
+  const nudge = !nudgeHidden && works !== undefined && shouldPromptBackup(works.some((w) => !w.synthetic))
   const [confirmClear, setConfirmClear] = useState(false)
   const set = <K extends keyof LibraryQuery>(k: K, v: LibraryQuery[K]) => setQ({ ...q, [k]: v })
 
@@ -119,6 +123,7 @@ export function Library({ works, query: q, onQuery: setQ, selectedId, onSelect, 
       {nudge && (
         <p className="nudge" role="status">
           Your library exists only on this device. <button type="button" className="btn-link inline" onClick={onOpenSettings}>Back it up</button>
+          <button type="button" className="btn-link inline nudge-dismiss" onClick={() => { nudgeDismissed = true; setNudgeHidden(true) }}>Not now</button>
         </p>
       )}
 
@@ -128,30 +133,30 @@ export function Library({ works, query: q, onQuery: setQ, selectedId, onSelect, 
           <span className="sr-only">Search title or author</span>
           <input type="search" placeholder="Search title or author" value={q.text} onChange={(e) => set('text', e.target.value)} />
         </label>
-        <label className="select">
-          <span className="sr-only">Genre</span>
-          <select value={q.genre} onChange={(e) => set('genre', e.target.value as GenreId | 'any')}>
-            <option value="any">All genres</option>
-            {GENRES.map((g) => <option key={g.id} value={g.id}>{g.label}</option>)}
-          </select>
-        </label>
-        <button type="button" className="btn-quiet" aria-expanded={moreOpen || chips.length > 0} onClick={() => setMoreOpen(!moreOpen)}>Filters{chips.length > 0 && ` · ${chips.length}`}</button>
-        <label className="select">
-          <span className="sr-only">View</span>
-          <select value={view} onChange={(e) => setLibraryView(e.target.value as LibraryView)}>
-            {VIEWS.map((v) => <option key={v.id} value={v.id}>{v.label}</option>)}
-          </select>
-        </label>
-        <label className="select">
-          <span className="sr-only">Sort by</span>
-          <select value={q.sort} onChange={(e) => set('sort', e.target.value as SortKey)}>
-            {SORTS.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
-          </select>
-        </label>
+        <button type="button" className="btn-quiet" aria-expanded={moreOpen || chips.length > 0} onClick={() => setMoreOpen(!moreOpen)}>Filters and sort{chips.length > 0 && ` · ${chips.length}`}</button>
       </div>
 
       {(moreOpen || chips.length > 0) && (
         <div className="tools lib-more">
+          <label className="select">
+            <span className="sr-only">Genre</span>
+            <select value={q.genre} onChange={(e) => set('genre', e.target.value as GenreId | 'any')}>
+              <option value="any">All genres</option>
+              {GENRES.map((g) => <option key={g.id} value={g.id}>{g.label}</option>)}
+            </select>
+          </label>
+          <label className="select">
+            <span className="sr-only">View</span>
+            <select value={view} onChange={(e) => setLibraryView(e.target.value as LibraryView)}>
+              {VIEWS.map((v) => <option key={v.id} value={v.id}>{v.label}</option>)}
+            </select>
+          </label>
+          <label className="select">
+            <span className="sr-only">Sort by</span>
+            <select value={q.sort} onChange={(e) => set('sort', e.target.value as SortKey)}>
+              {SORTS.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
+            </select>
+          </label>
           <label className="select">
             <span className="sr-only">Tag</span>
             <select value={q.tag} onChange={(e) => set('tag', e.target.value)}>

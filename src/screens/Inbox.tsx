@@ -59,7 +59,7 @@ function GroupRow({ group, dismissed, onResolved }: { group: InboxGroup; dismiss
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | undefined>()
   const [genres, setGenres] = useState<GenreId[]>([])
-  const [showGenres, setShowGenres] = useState(false)
+  const [showDetails, setShowDetails] = useState(false)
   const [tags, setTags] = useState<string[]>([])
   const volume = parseVolume(group.title)
   const [seriesOn, setSeriesOn] = useState(false)
@@ -78,6 +78,8 @@ function GroupRow({ group, dismissed, onResolved }: { group: InboxGroup; dismiss
   const series = useSeriesLookup(group.title, form, !dismissed && makesNewWork && !hit)
   const seriesHit = series.lookup.hit
   const suggested = [...new Set([...(hit ? suggestGenres(hit.subjects) : []), ...(seriesHit ? suggestGenres(seriesHit.subjects) : [])])]
+  const picked = [genres.length && `${genres.length} ${genres.length === 1 ? 'genre' : 'genres'}`, form && (form === 'novel' ? 'light novel' : 'manga'), seriesOn && 'series'].filter(Boolean)
+  const detailsLabel = picked.length ? `Details: ${picked.join(', ')}` : suggested.length ? `Details (${suggested.length} genres suggested)` : 'Details: genres, form, series'
   const details = makesNewWork
     ? { genres, tags, series: seriesOn ? volume : undefined, pageCount: hit?.pageCount, coverUrl: hit?.coverUrl, openLibrary: hit?.key, isbn: hit?.isbns }
     : undefined
@@ -122,37 +124,39 @@ function GroupRow({ group, dismissed, onResolved }: { group: InboxGroup; dismiss
         {!dismissed && makesNewWork && (
           <div className="ib-genres">
             <LookupLine lookup={lookup} mode={mode} run={lookNow} undecided={undecided} saves={[hit?.pageCount && 'page count', hit?.coverUrl && 'cover'].filter(Boolean).join(' and ') && `${[hit?.pageCount && 'page count', hit?.coverUrl && 'cover'].filter(Boolean).join(' and ')} ${[hit?.pageCount, hit?.coverUrl].filter(Boolean).length > 1 ? 'are' : 'is'}`} />
-            <button type="button" className="btn-link" aria-expanded={showGenres} onClick={() => setShowGenres(!showGenres)}>
-              {genres.length ? `Genres: ${genres.map((g) => GENRES.find((x) => x.id === g)?.label).join(', ')}` : suggested.length ? `Set genres (${suggested.length} suggested)` : 'Set genres'}
-            </button>
-            {showGenres && <div className="genre-picks" role="group" aria-label={`Genres for ${group.title}`}>
-              {GENRES.map((g) => {
-                const on = genres.includes(g.id)
-                return (
-                  <button key={g.id} type="button" className="genre-pick sm" aria-pressed={on} style={{ ['--ink-genre' as string]: g.ink }} onClick={() => setGenres(on ? genres.filter((x) => x !== g.id) : [...genres, g.id])}>
-                    {g.label}{suggested.includes(g.id) && <span className="sug"> · suggested</span>}
-                  </button>
-                )
-              })}
-            </div>}
-            <div className="genre-picks" role="group" aria-label={`Form for ${group.title}`}>
-              {FORMS.map((f) => {
-                const on = tags.includes(f.tag)
-                return <button key={f.tag} type="button" className="genre-pick sm tag-pick" aria-pressed={on} onClick={() => setTags(on ? tags.filter((x) => x !== f.tag) : [...tags.filter((x) => x !== 'light novel' && x !== 'manga'), f.tag])}>{f.label}{suggestedTags.includes(f.tag) && <span className="sug"> · suggested</span>}</button>
-              })}
-            </div>
-            {volume && (
-              <div className="genre-picks" role="group" aria-label={`Series for ${group.title}`}>
-                <button type="button" className="genre-pick sm tag-pick" aria-pressed={seriesOn} onClick={() => setSeriesOn(!seriesOn)}>Series: {volume.name}<span className="sug"> · suggested</span></button>
+            <button type="button" className="btn-link" aria-expanded={showDetails} onClick={() => setShowDetails(!showDetails)}>{detailsLabel}</button>
+            {showDetails && (
+              <div className="ib-details">
+                <div className="genre-picks" role="group" aria-label={`Genres for ${group.title}`}>
+                  {GENRES.map((g) => {
+                    const on = genres.includes(g.id)
+                    return (
+                      <button key={g.id} type="button" className="genre-pick sm" aria-pressed={on} style={{ ['--ink-genre' as string]: g.ink }} onClick={() => setGenres(on ? genres.filter((x) => x !== g.id) : [...genres, g.id])}>
+                        {g.label}{suggested.includes(g.id) && <span className="sug"> · suggested</span>}
+                      </button>
+                    )
+                  })}
+                </div>
+              <div className="genre-picks" role="group" aria-label={`Form for ${group.title}`}>
+                {FORMS.map((f) => {
+                  const on = tags.includes(f.tag)
+                  return <button key={f.tag} type="button" className="genre-pick sm tag-pick" aria-pressed={on} onClick={() => setTags(on ? tags.filter((x) => x !== f.tag) : [...tags.filter((x) => x !== 'light novel' && x !== 'manga'), f.tag])}>{f.label}{suggestedTags.includes(f.tag) && <span className="sug"> · suggested</span>}</button>
+                })}
               </div>
-            )}
-            {form && series.mode === 'ask' && series.lookup.state === 'idle' && <button type="button" className="btn-link" onClick={series.run}>Look up genres on AniList</button>}
-            {form && series.mode !== 'off' && series.lookup.state !== 'idle' && (
-              <p className="ib-lookup">
-                {series.lookup.state === 'loading' && 'Checking AniList…'}
-                {series.lookup.state === 'done' && (seriesHit ? `Found this ${form === 'novel' ? 'light novel' : 'manga'} series on AniList. Its genres are suggested above.` : `No sure ${form === 'novel' ? 'light novel' : 'manga'} match on AniList, so nothing is suggested.`)}
-                {series.lookup.state === 'failed' && 'Could not reach AniList. You can set genres by hand.'}
-              </p>
+              {volume && (
+                <div className="genre-picks" role="group" aria-label={`Series for ${group.title}`}>
+                  <button type="button" className="genre-pick sm tag-pick" aria-pressed={seriesOn} onClick={() => setSeriesOn(!seriesOn)}>Series: {volume.name}<span className="sug"> · suggested</span></button>
+                </div>
+              )}
+              {form && series.mode === 'ask' && series.lookup.state === 'idle' && <button type="button" className="btn-link" onClick={series.run}>Look up genres on AniList</button>}
+              {form && series.mode !== 'off' && series.lookup.state !== 'idle' && (
+                <p className="ib-lookup">
+                  {series.lookup.state === 'loading' && 'Checking AniList…'}
+                  {series.lookup.state === 'done' && (seriesHit ? `Found this ${form === 'novel' ? 'light novel' : 'manga'} series on AniList. Its genres are suggested above.` : `No sure ${form === 'novel' ? 'light novel' : 'manga'} match on AniList, so nothing is suggested.`)}
+                  {series.lookup.state === 'failed' && 'Could not reach AniList. You can set genres by hand.'}
+                </p>
+              )}
+              </div>
             )}
           </div>
         )}
@@ -163,26 +167,25 @@ function GroupRow({ group, dismissed, onResolved }: { group: InboxGroup; dismiss
           </div>
         ) : (
           <>
-            <div className="ib-actions">
+            {undecided && <p className="ib-note">Say whether it is the same book first.</p>}
+            <div className="ib-actions" role="group" aria-label={`Did you read ${group.title}?`}>
               <label className="ib-format">
                 <span className="sr-only">Format for {group.title}</span>
                 <select value={format} onChange={(e) => setFormat(e.target.value as Format)}>
                   {FORMATS.map((f) => <option key={f.id} value={f.id}>{f.label}</option>)}
                 </select>
               </label>
-              <button type="button" className="btn-primary sm" disabled={busy || undecided} onClick={() => resolve({ recordIds: ids, resolution: { kind: 'finished', format }, workId, details }, 'finished')}>Finished</button>
-              <button type="button" className="btn-quiet" disabled={busy || undecided} onClick={() => resolve({ recordIds: ids, resolution: { kind: 'dnf', format }, workId, details }, 'marked did not finish')}>DNF</button>
+              <button type="button" className="btn-primary sm" disabled={busy || undecided} onClick={() => resolve({ recordIds: ids, resolution: { kind: 'finished', format }, workId, details }, 'finished')}>Finished it</button>
+              <button type="button" className="btn-quiet" disabled={busy || undecided} onClick={() => resolve({ recordIds: ids, resolution: { kind: 'dnf', format }, workId, details }, 'marked did not finish')}>Did not finish</button>
+            </div>
+            <p className="ib-note">Both are dated {formatDate(finish)}, the borrow month.</p>
+            <div className="ib-actions ib-else" role="group" aria-label={`Not reading ${group.title}`}>
               <button type="button" className="btn-quiet" disabled={busy || undecided} onClick={() => resolve({ recordIds: ids, resolution: { kind: 'want' }, workId, details }, 'on Want to read')}>Want to read</button>
               {match && (
                 <button type="button" className="btn-quiet" disabled={busy || undecided || same === false} onClick={() => resolve({ recordIds: ids, resolution: { kind: 'link' }, workId }, 'linked')}>Just link loans</button>
               )}
               <button type="button" className="btn-link" disabled={busy} onClick={() => run(() => setDismissed(ids, true))}>Dismiss</button>
             </div>
-            <p className="ib-note">
-              {undecided
-                ? 'Say whether it is the same book first.'
-                : `Finished or DNF is dated ${formatDate(finish)}, the borrow month.`}
-            </p>
           </>
         )}
         {error && <p className="form-error" role="alert">{error}</p>}
