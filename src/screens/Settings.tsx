@@ -7,7 +7,18 @@ import { setLookupMode, useLookupMode, type LookupMode } from '../settings'
 import { db, eraseLibrary } from '../storage'
 import { useSyncExternalStore } from 'react'
 
-function download(name: string, data: string, type: string) {
+// iOS home-screen apps open a downloaded blob in a viewer with no way to save it,
+// so hand the file to the share sheet (Save to Files) where the browser supports it.
+async function download(name: string, data: string, type: string): Promise<boolean> {
+  const file = new File([data], name, { type: type.split(';')[0] })
+  if (navigator.canShare?.({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file], title: name })
+      return true
+    } catch (e) {
+      if (e instanceof DOMException && e.name === 'AbortError') return false
+    }
+  }
   const url = URL.createObjectURL(new Blob([data], { type }))
   const a = document.createElement('a')
   a.href = url
@@ -16,6 +27,7 @@ function download(name: string, data: string, type: string) {
   a.click()
   a.remove()
   setTimeout(() => URL.revokeObjectURL(url), 10_000)
+  return true
 }
 
 const when = (ms?: number) =>
@@ -41,9 +53,9 @@ export function Settings() {
   async function backup() {
     setError(undefined)
     try {
-      download(backupFileName(), JSON.stringify(await createBackup(db)), 'application/json')
+      if (!(await download(backupFileName(), JSON.stringify(await createBackup(db)), 'application/json'))) return
       markBackedUp()
-      setMsg('Backup downloaded. Keep the file somewhere safe, such as iCloud Drive.')
+      setMsg('Backup ready. Keep the file somewhere safe, such as iCloud Drive.')
     } catch {
       setError('Could not create the backup. Nothing was changed.')
     }
@@ -67,7 +79,7 @@ export function Settings() {
   async function csv() {
     setError(undefined)
     const [works, readings] = await Promise.all([db.works.toArray(), db.readings.toArray()])
-    download('too-many-books-readings.csv', readingsCsv(works, readings), 'text/csv;charset=utf-8')
+    await download('too-many-books-readings.csv', readingsCsv(works, readings), 'text/csv;charset=utf-8')
     setMsg('Reading history exported as a spreadsheet. It is one-way and cannot be imported back.')
   }
 
