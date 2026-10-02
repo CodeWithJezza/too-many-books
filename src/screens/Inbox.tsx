@@ -62,6 +62,7 @@ function GroupRow({ group, dismissed, onResolved, onDismissed }: { group: InboxG
   const [error, setError] = useState<string | undefined>()
   const [genres, setGenres] = useState<GenreId[]>([])
   const [showDetails, setShowDetails] = useState(false)
+  const [showMore, setShowMore] = useState(false)
   const [tags, setTags] = useState<string[]>([])
   const volume = parseVolume(group.title)
   const [seriesOn, setSeriesOn] = useState(false)
@@ -81,7 +82,9 @@ function GroupRow({ group, dismissed, onResolved, onDismissed }: { group: InboxG
   const seriesHit = series.lookup.hit
   const suggested = [...new Set([...(hit ? suggestGenres(hit.subjects) : []), ...(seriesHit ? suggestGenres(seriesHit.subjects) : [])])]
   const picked = [genres.length && `${genres.length} ${genres.length === 1 ? 'genre' : 'genres'}`, form && (form === 'novel' ? 'light novel' : 'manga'), seriesOn && 'series'].filter(Boolean)
-  const detailsLabel = picked.length ? `Details: ${picked.join(', ')}` : suggested.length ? `Details (${suggested.length} genres suggested)` : 'Details: genres, form, series'
+  const formatLabel = FORMATS.find((f) => f.id === format)!.label
+  const tail = makesNewWork ? (picked.length ? picked : suggested.length ? [`${suggested.length} genres suggested`] : ['genres, form, series']) : []
+  const detailsLabel = `Details: ${[formatLabel, ...tail].join(', ')}`
   const details = makesNewWork
     ? { genres, tags, series: seriesOn ? volume : undefined, pageCount: hit?.pageCount, coverUrl: hit?.coverUrl, openLibrary: hit?.key, isbn: hit?.isbns }
     : undefined
@@ -101,9 +104,7 @@ function GroupRow({ group, dismissed, onResolved, onDismissed }: { group: InboxG
     }
   }
 
-  const finish = monthOf(newest.borrowedAt)
-
-  return (
+    return (
     <li className="ib-row" ref={ref}>
       <Jacket work={{ ...asWork(group, hit?.coverUrl), genres }} size="mini" />
       <div className="ib-main">
@@ -123,41 +124,46 @@ function GroupRow({ group, dismissed, onResolved, onDismissed }: { group: InboxG
           </div>
         )}
 
-        {!dismissed && makesNewWork && (
+        {!dismissed && (
           <div className="ib-genres">
-            <LookupLine lookup={lookup} mode={mode} run={lookNow} undecided={undecided} saves={[hit?.pageCount && 'page count', hit?.coverUrl && 'cover'].filter(Boolean).join(' and ') && `${[hit?.pageCount && 'page count', hit?.coverUrl && 'cover'].filter(Boolean).join(' and ')} ${[hit?.pageCount, hit?.coverUrl].filter(Boolean).length > 1 ? 'are' : 'is'}`} />
+            {makesNewWork && <LookupLine lookup={lookup} mode={mode} run={lookNow} undecided={undecided} saves={[hit?.pageCount && 'page count', hit?.coverUrl && 'cover'].filter(Boolean).join(' and ') && `${[hit?.pageCount && 'page count', hit?.coverUrl && 'cover'].filter(Boolean).join(' and ')} ${[hit?.pageCount, hit?.coverUrl].filter(Boolean).length > 1 ? 'are' : 'is'}`} />}
             <button type="button" className="btn-link" aria-expanded={showDetails} onClick={() => setShowDetails(!showDetails)}>{detailsLabel}</button>
             {showDetails && (
               <div className="ib-details">
-                <div className="genre-picks" role="group" aria-label={`Genres for ${group.title}`}>
-                  {GENRES.map((g) => {
-                    const on = genres.includes(g.id)
-                    return (
-                      <button key={g.id} type="button" className="genre-pick sm" aria-pressed={on} style={{ ['--ink-genre' as string]: g.ink }} onClick={() => setGenres(on ? genres.filter((x) => x !== g.id) : [...genres, g.id])}>
-                        {g.label}{suggested.includes(g.id) && <span className="sug"> · suggested</span>}
-                      </button>
-                    )
-                  })}
-                </div>
-              <div className="genre-picks" role="group" aria-label={`Form for ${group.title}`}>
-                {FORMS.map((f) => {
-                  const on = tags.includes(f.tag)
-                  return <button key={f.tag} type="button" className="genre-pick sm tag-pick" aria-pressed={on} onClick={() => setTags(on ? tags.filter((x) => x !== f.tag) : [...tags.filter((x) => x !== 'light novel' && x !== 'manga'), f.tag])}>{f.label}{suggestedTags.includes(f.tag) && <span className="sug"> · suggested</span>}</button>
-                })}
-              </div>
-              {volume && (
-                <div className="genre-picks" role="group" aria-label={`Series for ${group.title}`}>
-                  <button type="button" className="genre-pick sm tag-pick" aria-pressed={seriesOn} onClick={() => setSeriesOn(!seriesOn)}>Series: {volume.name}<span className="sug"> · suggested</span></button>
-                </div>
-              )}
-              {form && series.mode === 'ask' && series.lookup.state === 'idle' && <button type="button" className="btn-link" onClick={series.run}>Look up genres on AniList</button>}
-              {form && series.mode !== 'off' && series.lookup.state !== 'idle' && (
-                <p className="ib-lookup">
-                  {series.lookup.state === 'loading' && 'Checking AniList…'}
-                  {series.lookup.state === 'done' && (seriesHit ? `Found this ${form === 'novel' ? 'light novel' : 'manga'} series on AniList. Its genres are suggested above.` : `No sure ${form === 'novel' ? 'light novel' : 'manga'} match on AniList, so nothing is suggested.`)}
-                  {series.lookup.state === 'failed' && 'Could not reach AniList. You can set genres by hand.'}
-                </p>
-              )}
+                <Segmented label={`Format for ${group.title}`} value={format} options={FORMATS} onChange={setFormat} />
+                {makesNewWork && (
+                  <>
+                    <div className="genre-picks" role="group" aria-label={`Genres for ${group.title}`}>
+                      {GENRES.map((g) => {
+                        const on = genres.includes(g.id)
+                        return (
+                          <button key={g.id} type="button" className="genre-pick sm" aria-pressed={on} style={{ ['--ink-genre' as string]: g.ink }} onClick={() => setGenres(on ? genres.filter((x) => x !== g.id) : [...genres, g.id])}>
+                            {g.label}{suggested.includes(g.id) && <span className="sug"> · suggested</span>}
+                          </button>
+                        )
+                      })}
+                    </div>
+                    <div className="genre-picks" role="group" aria-label={`Form for ${group.title}`}>
+                      {FORMS.map((f) => {
+                        const on = tags.includes(f.tag)
+                        return <button key={f.tag} type="button" className="genre-pick sm tag-pick" aria-pressed={on} onClick={() => setTags(on ? tags.filter((x) => x !== f.tag) : [...tags.filter((x) => x !== 'light novel' && x !== 'manga'), f.tag])}>{f.label}{suggestedTags.includes(f.tag) && <span className="sug"> · suggested</span>}</button>
+                      })}
+                    </div>
+                    {volume && (
+                      <div className="genre-picks" role="group" aria-label={`Series for ${group.title}`}>
+                        <button type="button" className="genre-pick sm tag-pick" aria-pressed={seriesOn} onClick={() => setSeriesOn(!seriesOn)}>Series: {volume.name}<span className="sug"> · suggested</span></button>
+                      </div>
+                    )}
+                    {form && series.mode === 'ask' && series.lookup.state === 'idle' && <button type="button" className="btn-link" onClick={series.run}>Look up genres on AniList</button>}
+                    {form && series.mode !== 'off' && series.lookup.state !== 'idle' && (
+                      <p className="ib-lookup">
+                        {series.lookup.state === 'loading' && 'Checking AniList…'}
+                        {series.lookup.state === 'done' && (seriesHit ? `Found this ${form === 'novel' ? 'light novel' : 'manga'} series on AniList. Its genres are suggested above.` : `No sure ${form === 'novel' ? 'light novel' : 'manga'} match on AniList, so nothing is suggested.`)}
+                        {series.lookup.state === 'failed' && 'Could not reach AniList. You can set genres by hand.'}
+                      </p>
+                    )}
+                  </>
+                )}
               </div>
             )}
           </div>
@@ -171,23 +177,19 @@ function GroupRow({ group, dismissed, onResolved, onDismissed }: { group: InboxG
           <>
             {undecided && <p className="ib-note">Say whether it is the same book first.</p>}
             <div className="ib-actions" role="group" aria-label={`Did you read ${group.title}?`}>
-              <label className="ib-format">
-                <span className="sr-only">Format for {group.title}</span>
-                <select value={format} onChange={(e) => setFormat(e.target.value as Format)}>
-                  {FORMATS.map((f) => <option key={f.id} value={f.id}>{f.label}</option>)}
-                </select>
-              </label>
               <button type="button" className="btn-primary sm" disabled={busy || undecided} onClick={() => resolve({ recordIds: ids, resolution: { kind: 'finished', format }, workId, details }, 'finished')}>Finished it</button>
               <button type="button" className="btn-quiet" disabled={busy || undecided} onClick={() => resolve({ recordIds: ids, resolution: { kind: 'dnf', format }, workId, details }, 'marked did not finish')}>Did not finish</button>
+              <button type="button" className="btn-link" aria-expanded={showMore} onClick={() => setShowMore(!showMore)}>{showMore ? 'Fewer' : 'More'}</button>
             </div>
-            <p className="ib-note">Both are dated {formatDate(finish)}, the borrow month.</p>
-            <div className="ib-actions ib-else" role="group" aria-label={`Not reading ${group.title}`}>
-              <button type="button" className="btn-quiet" disabled={busy || undecided} onClick={() => resolve({ recordIds: ids, resolution: { kind: 'want' }, workId, details }, 'on Want to read')}>Want to read</button>
-              {match && (
-                <button type="button" className="btn-quiet" disabled={busy || undecided || same === false} onClick={() => resolve({ recordIds: ids, resolution: { kind: 'link' }, workId }, 'linked')}>Just link loans</button>
-              )}
-              <button type="button" className="btn-link" disabled={busy} onClick={() => run(async () => { await setDismissed(ids, true); onDismissed(group.title, () => setDismissed(ids, false)) })}>Dismiss</button>
-            </div>
+            {showMore && (
+              <div className="ib-actions ib-else" role="group" aria-label={`Not reading ${group.title}`}>
+                <button type="button" className="btn-quiet" disabled={busy || undecided} onClick={() => resolve({ recordIds: ids, resolution: { kind: 'want' }, workId, details }, 'on Want to read')}>Want to read</button>
+                {match && (
+                  <button type="button" className="btn-quiet" disabled={busy || undecided || same === false} onClick={() => resolve({ recordIds: ids, resolution: { kind: 'link' }, workId }, 'linked')}>Just link loans</button>
+                )}
+                <button type="button" className="btn-link" disabled={busy} onClick={() => run(async () => { await setDismissed(ids, true); onDismissed(group.title, () => setDismissed(ids, false)) })}>Dismiss</button>
+              </div>
+            )}
           </>
         )}
         {error && <p className="form-error" role="alert">{error}</p>}
@@ -211,7 +213,9 @@ export function Inbox({ onOpenStats }: { onOpenStats: () => void }) {
   const [sorted, setSorted] = useState(0)
   const [importing, setImporting] = useState(false)
   // The last few actions, newest first, so a run of mis-taps can be walked back one at a time.
-  const [undos, setUndos] = useState<{ text: string; run: () => Promise<void>; counts: number }[]>([])
+  const [undos, setUndos] = useState<{ text: string; run: () => Promise<void>; counts: number; kind?: string }[]>([])
+  // What this sitting sorted, by outcome, for the recap when the Inbox clears.
+  const [outcomes, setOutcomes] = useState<Record<string, number>>({})
   const [undoing, setUndoing] = useState(false)
   const [confirmBulk, setConfirmBulk] = useState(false)
   const listRef = useRef<HTMLUListElement>(null)
@@ -226,6 +230,10 @@ export function Inbox({ onOpenStats }: { onOpenStats: () => void }) {
   const pendingGroups = useMemo(() => buildGroups(pending ?? [], works), [pending, works])
   const dismissedGroups = useMemo(() => buildGroups(dismissed ?? [], works), [dismissed, works])
   const clean = pendingGroups.filter(isClean)
+  const recap = [
+    [outcomes.finished, 'finished'], [outcomes['marked did not finish'], 'did not finish'], [outcomes['on Want to read'], 'want to read'], [outcomes.linked, 'linked to books you had'], [outcomes.goodreads, 'from Goodreads'],
+  ].filter(([n]) => n).map(([n, l]) => `${n} ${l}`).join(', ')
+  const recapLine = `${sorted} sorted${recap ? `: ${recap}` : ''}.`
   const groups = view === 'pending' ? pendingGroups : dismissedGroups
   const rowCount = groups.length + ((view === 'pending' ? grPending : grDismissed)?.length ?? 0)
 
@@ -275,13 +283,14 @@ export function Inbox({ onOpenStats }: { onOpenStats: () => void }) {
   }
 
   /** Remembers an action so it can be undone; `counts` is how many books it added to the sitting's tally. */
-  function remember(text: string, run: () => Promise<void>, counts = 0) {
+  function remember(text: string, run: () => Promise<void>, counts = 0, kind?: string) {
     setNote(undefined)
     setError(undefined)
     setSummary(undefined)
     setGrSummary(undefined)
     setSorted((n) => n + counts)
-    setUndos((u) => [{ text, run, counts }, ...u].slice(0, UNDO_DEPTH))
+    if (kind && counts) setOutcomes((o) => ({ ...o, [kind]: (o[kind] ?? 0) + counts }))
+    setUndos((u) => [{ text, run, counts, kind }, ...u].slice(0, UNDO_DEPTH))
   }
 
   async function acceptClean() {
@@ -300,6 +309,7 @@ export function Inbox({ onOpenStats }: { onOpenStats: () => void }) {
       `Linked the loans for ${receipts.length} ${receipts.length === 1 ? 'book' : 'books'} you already had. Nothing was marked finished.`,
       async () => { for (const r of [...receipts].reverse()) await undoResolve(r) },
       receipts.length,
+      'linked',
     )
   }
 
@@ -332,6 +342,7 @@ export function Inbox({ onOpenStats }: { onOpenStats: () => void }) {
       await last.run()
       setUndos(rest)
       setSorted((n) => Math.max(0, n - last.counts))
+      if (last.kind && last.counts) setOutcomes((o) => ({ ...o, [last.kind!]: Math.max(0, (o[last.kind!] ?? 0) - last.counts) }))
       setNote(`Undone: ${last.text}`)
     } catch {
       setError('That did not undo. Nothing changed.')
@@ -415,7 +426,8 @@ export function Inbox({ onOpenStats }: { onOpenStats: () => void }) {
           <p className="state-title">{view === 'pending' ? 'Inbox is clear' : 'Nothing dismissed'}</p>
           {view === 'pending' && sorted > 0 ? (
             <>
-              <p>{sorted === 1 ? 'The book you sorted this sitting is' : `The ${sorted} books you sorted this sitting are`} in your Library now.</p>
+              <p>{recapLine}</p>
+              <p>{sorted === 1 ? 'It is' : 'They are'} in your Library now.</p>
               <button type="button" className="btn-quiet" onClick={onOpenStats}>See your reading in Stats</button>
             </>
           ) : (
@@ -423,10 +435,12 @@ export function Inbox({ onOpenStats }: { onOpenStats: () => void }) {
           )}
         </div>
       ) : (
+        <>
+        {view === 'pending' && <p className="hint ib-help">Finished and Did not finish are dated the month you borrowed.</p>}
         <ul ref={listRef} className="ib-list" onClickCapture={(e) => {
           const t = e.target as HTMLElement
           const row = t.closest('li.ib-row')
-          if (row && t.closest('.ib-actions') && t.closest('button')) actedIdx.current = [...(listRef.current?.children ?? [])].indexOf(row)
+          if (row && t.closest('.ib-actions') && t.closest('button') && !t.closest('[aria-expanded]')) actedIdx.current = [...(listRef.current?.children ?? [])].indexOf(row)
         }} aria-label={view === 'pending' ? 'Books to review' : 'Dismissed books'}>
           {(() => {
             const gr = (view === 'pending' ? grPending : grDismissed) ?? []
@@ -436,14 +450,15 @@ export function Inbox({ onOpenStats }: { onOpenStats: () => void }) {
             return (
               <>
                 {shownGr.map((r) => (
-                  <GoodreadsRow key={`gr${r.id}-${JSON.stringify(r.seen)}`} rec={r} works={works} dismissed={view === 'dismissed'} onDone={(text, run) => remember(text, run, /^(Added|Linked)/.test(text) ? 1 : 0)} />
+                  <GoodreadsRow key={`gr${r.id}-${JSON.stringify(r.seen)}`} rec={r} works={works} dismissed={view === 'dismissed'} onDone={(text, run) => remember(text, run, /^(Added|Linked)/.test(text) ? 1 : 0, 'goodreads')} />
                 ))}
-                {shownGroups.map((g) => <GroupRow key={g.key} group={g} dismissed={view === 'dismissed'} onResolved={(r, what) => remember(`Marked “${r.title}” ${what}.`, () => undoResolve(r), 1)} onDismissed={(title, run) => remember(`Dismissed “${title}”.`, run)} />)}
+                {shownGroups.map((g) => <GroupRow key={g.key} group={g} dismissed={view === 'dismissed'} onResolved={(r, what) => remember(`Marked “${r.title}” ${what}.`, () => undoResolve(r), 1, what)} onDismissed={(title, run) => remember(`Dismissed “${title}”.`, run)} />)}
                 {left > 0 && <More left={left} onMore={() => setLimit((l) => l + PAGE)} />}
               </>
             )
           })()}
         </ul>
+        </>
       )}
       <div className="ib-live" role="status">
         {(undos.length > 0 || note) && (

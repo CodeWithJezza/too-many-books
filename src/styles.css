@@ -90,6 +90,8 @@ h1 { font-size: 36px; font-weight: 800; line-height: 1.05; letter-spacing: -0.01
 .search input { flex: 1; min-width: 0; border: 0; background: none; outline: none; color: var(--cardink); font-size: 16px; }
 .search input::placeholder { color: var(--cardmute); opacity: 1; }
 .search:focus-within { outline: 3px solid var(--accent); outline-offset: 2px; }
+.select.lbl { display: flex; align-items: center; gap: 8px; }
+.sel-l { font-size: 14px; font-weight: 600; color: var(--mute); }
 .select select { min-height: 46px; padding: 0 12px; border: 1px solid var(--rule); border-radius: 6px; background: var(--card); color: var(--cardink); }
 
 .shelf-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0 26px; }

@@ -85,6 +85,9 @@ export function Library({ works, query: q, onQuery: setQ, selectedId, onSelect, 
   const tags = useMemo(() => [...new Set((works ?? []).flatMap((w) => w.tags))].sort(), [works])
   const years = useMemo(() => [...new Set((works ?? []).flatMap((w) => (w.readings ?? []).map((r) => r.finish?.y)).filter((y): y is number => y !== undefined))].sort((a, b) => b - a), [works])
   const [moreOpen, setMoreOpen] = useState(false)
+  const [rareOpen, setRareOpen] = useState(false)
+  // Tag, series and completeness are rarely used, so they sit behind 'More filters' unless one is already on.
+  const rareActive = q.tag !== 'any' || q.series !== 'any' || q.missing !== 'any'
   const seriesNames = useMemo(() => buildSeries(works ?? [], []).map((s) => s.name), [works])
   const view = useLibraryView()
   // The first book under each letter, so the index can jump to it.
@@ -133,7 +136,19 @@ export function Library({ works, query: q, onQuery: setQ, selectedId, onSelect, 
           <span className="sr-only">Search title or author</span>
           <input type="search" placeholder="Search title or author" value={q.text} onChange={(e) => set('text', e.target.value)} />
         </label>
-        <button type="button" className="btn-quiet" aria-expanded={moreOpen || chips.length > 0} onClick={() => setMoreOpen(!moreOpen)}>Filters and sort{chips.length > 0 && ` · ${chips.length}`}</button>
+        <label className="select lbl">
+          <span className="sel-l">Sort</span>
+          <select value={q.sort} onChange={(e) => set('sort', e.target.value as SortKey)}>
+            {SORTS.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
+          </select>
+        </label>
+        <label className="select lbl">
+          <span className="sel-l">View</span>
+          <select value={view} onChange={(e) => setLibraryView(e.target.value as LibraryView)}>
+            {VIEWS.map((v) => <option key={v.id} value={v.id}>{v.label}</option>)}
+          </select>
+        </label>
+        <button type="button" className="btn-quiet" aria-expanded={moreOpen || chips.length > 0} onClick={() => setMoreOpen(!moreOpen)}>Filters{chips.length > 0 && ` · ${chips.length}`}</button>
       </div>
 
       {(moreOpen || chips.length > 0) && (
@@ -146,17 +161,31 @@ export function Library({ works, query: q, onQuery: setQ, selectedId, onSelect, 
             </select>
           </label>
           <label className="select">
-            <span className="sr-only">View</span>
-            <select value={view} onChange={(e) => setLibraryView(e.target.value as LibraryView)}>
-              {VIEWS.map((v) => <option key={v.id} value={v.id}>{v.label}</option>)}
+            <span className="sr-only">Rating</span>
+            <select value={String(q.rating)} onChange={(e) => set('rating', e.target.value === 'any' || e.target.value === 'unrated' ? e.target.value : Number(e.target.value))}>
+              <option value="any">Any rating</option>
+              {RATING_CHOICES.map((r) => <option key={r} value={r}>{r} {r === 1 ? 'star' : 'stars'}</option>)}
+              <option value="unrated">Unrated</option>
             </select>
           </label>
           <label className="select">
-            <span className="sr-only">Sort by</span>
-            <select value={q.sort} onChange={(e) => set('sort', e.target.value as SortKey)}>
-              {SORTS.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
+            <span className="sr-only">Format</span>
+            <select value={q.format} onChange={(e) => set('format', e.target.value as Format | 'any')}>
+              <option value="any">All formats</option>
+              {(Object.keys(FORMAT_LABEL) as Format[]).map((f) => <option key={f} value={f}>{FORMAT_LABEL[f]}</option>)}
             </select>
           </label>
+          <label className="select">
+            <span className="sr-only">Finished in</span>
+            <select value={String(q.year)} onChange={(e) => setQ({ ...q, month: 'any', year: e.target.value === 'any' || e.target.value === 'unknown' ? e.target.value : Number(e.target.value) })}>
+              <option value="any">Any year</option>
+              {years.map((y) => <option key={y} value={y}>{y}</option>)}
+              <option value="unknown">Date unknown</option>
+            </select>
+          </label>
+          <button type="button" className="btn-link" aria-expanded={rareOpen || rareActive} onClick={() => setRareOpen(!rareOpen)}>{rareOpen || rareActive ? 'Fewer filters' : 'More filters'}</button>
+          {(rareOpen || rareActive) && (
+            <>
           <label className="select">
             <span className="sr-only">Tag</span>
             <select value={q.tag} onChange={(e) => set('tag', e.target.value)}>
@@ -174,35 +203,14 @@ export function Library({ works, query: q, onQuery: setQ, selectedId, onSelect, 
             </label>
           )}
           <label className="select">
-            <span className="sr-only">Rating</span>
-            <select value={String(q.rating)} onChange={(e) => set('rating', e.target.value === 'any' || e.target.value === 'unrated' ? e.target.value : Number(e.target.value))}>
-              <option value="any">Any rating</option>
-              {RATING_CHOICES.map((r) => <option key={r} value={r}>{r} {r === 1 ? 'star' : 'stars'}</option>)}
-              <option value="unrated">Unrated</option>
-            </select>
-          </label>
-          <label className="select">
-            <span className="sr-only">Format</span>
-            <select value={q.format} onChange={(e) => set('format', e.target.value as Format | 'any')}>
-              <option value="any">All formats</option>
-              {(Object.keys(FORMAT_LABEL) as Format[]).map((f) => <option key={f} value={f}>{FORMAT_LABEL[f]}</option>)}
-            </select>
-          </label>
-          <label className="select">
             <span className="sr-only">Missing</span>
             <select value={q.missing} onChange={(e) => set('missing', e.target.value as Missing | 'any')}>
               <option value="any">Any completeness</option>
               {(Object.keys(MISSING_LABEL) as Missing[]).map((m) => <option key={m} value={m}>Missing {MISSING_LABEL[m]} ({gaps[m]})</option>)}
             </select>
           </label>
-          <label className="select">
-            <span className="sr-only">Finished in</span>
-            <select value={String(q.year)} onChange={(e) => setQ({ ...q, month: 'any', year: e.target.value === 'any' || e.target.value === 'unknown' ? e.target.value : Number(e.target.value) })}>
-              <option value="any">Any year</option>
-              {years.map((y) => <option key={y} value={y}>{y}</option>)}
-              <option value="unknown">Date unknown</option>
-            </select>
-          </label>
+            </>
+          )}
         </div>
       )}
       {chips.length > 0 && (
